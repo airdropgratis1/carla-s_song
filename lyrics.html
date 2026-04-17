@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>carla's song — lyrics</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: #fafaf9;
+      color: #1a1a18;
+      line-height: 1.7;
+      padding-bottom: 120px;
+      overflow-x: hidden;
+    }
+
+    /* ── READ PROGRESS BAR ── */
+    #read-progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px; width: 0%;
+      background: #888780;
+      z-index: 200;
+      transition: width 0.1s linear;
+    }
+
+    /* ── NAV TAB ── */
+    .nav-tab {
+      position: fixed;
+      top: 12px; right: 16px;
+      z-index: 150;
+      display: flex; gap: 6px;
+    }
+    .nav-btn {
+      font-size: 11px; font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 0.5px solid #d3d1c7;
+      background: #fafaf9;
+      color: #888780;
+      cursor: pointer;
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-btn:hover { background: #f1efe8; color: #1a1a18; }
+    .nav-btn.active { background: #1a1a18; color: #fafaf9; border-color: #1a1a18; }
+
+    /* ── STICKY PLAYER ── */
+    .sticky-player {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #fafaf9;
+      border-top: 0.5px solid #e0ddd6;
+      padding: 10px 20px;
+      z-index: 100;
+      display: flex; align-items: center; gap: 12px;
+    }
+    #pp-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 0; flex-shrink: 0; display: flex; align-items: center;
+    }
+    #pp-btn svg { display: block; }
+    .player-info { flex: 1; min-width: 0; }
+    #track-label {
+      font-size: 11px; color: #888780;
+      white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis; margin-bottom: 5px;
+      transition: opacity 0.3s;
+    }
+    #track-label.fade { opacity: 0; }
+    #progress {
+      width: 100%; height: 3px;
+      accent-color: #888780; cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      background: #e0ddd6; border-radius: 2px; outline: none;
+    }
+    #progress::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 10px; height: 10px;
+      border-radius: 50%; background: #888780; cursor: pointer;
+    }
+    .replay-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 0 0 0 4px; flex-shrink: 0;
+      display: flex; align-items: center; opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    .replay-btn:hover { opacity: 1; }
+    #tap-hint {
+      font-size: 11px; color: #b4b2a9;
+      animation: pulse 1.8s ease-in-out infinite;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+    /* ── PAGE ── */
+    .page { max-width: 600px; margin: 0 auto; padding: 3rem 1.5rem; }
+
+    .lyrics-header {
+      text-align: center;
+      padding-bottom: 2rem;
+      margin-bottom: 2.5rem;
+      border-bottom: 0.5px solid #e0ddd6;
+    }
+    .song-switch {
+      display: flex; gap: 8px; justify-content: center; margin-bottom: 1.5rem;
+    }
+    .song-tab {
+      font-size: 12px; font-weight: 500;
+      padding: 6px 16px; border-radius: 20px;
+      border: 0.5px solid #d3d1c7;
+      background: #fafaf9; color: #888780;
+      cursor: pointer; transition: all 0.15s;
+      letter-spacing: 0.03em;
+    }
+    .song-tab:hover { background: #f1efe8; color: #1a1a18; }
+    .song-tab.active { background: #1a1a18; color: #fafaf9; border-color: #1a1a18; }
+
+    .song-meta { font-size: 13px; color: #b4b2a9; }
+    .song-meta strong { color: #888780; font-weight: 500; }
+
+    /* ── LYRICS BLOCK ── */
+    .lyrics-block { display: none; }
+    .lyrics-block.active { display: block; }
+
+    .lyric-section {
+      margin-bottom: 2rem;
+      opacity: 0; transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .lyric-section.visible { opacity: 1; transform: translateY(0); }
+
+    .lyric-section-label {
+      font-size: 10px; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: #d3d1c7; margin-bottom: 0.75rem;
+    }
+
+    .lyric-line {
+      font-size: 18px;
+      line-height: 1.85;
+      color: #c8c6be;
+      cursor: default;
+      transition: color 0.25s, transform 0.2s;
+      display: block;
+      padding: 1px 0;
+      border-radius: 4px;
+    }
+    .lyric-line.active {
+      color: #1a1a18;
+      transform: scale(1.015);
+    }
+    .lyric-line.past { color: #888780; }
+
+    /* ── NO LYRICS NOTICE ── */
+    .no-lyrics {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #b4b2a9;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    .no-lyrics em { color: #888780; font-style: italic; }
+
+    /* ── FOOTER ── */
+    .footer {
+      font-size: 13px; color: #b4b2a9;
+      text-align: center;
+      padding-top: 1.5rem;
+      border-top: 0.5px solid #e0ddd6;
+      margin-top: 2rem;
+    }
+
+    /* ── DARK MODE ── */
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1a18; color: #f1efe8; }
+      .lyrics-header { border-color: #3a3a38; }
+      .song-tab { background: #1a1a18; border-color: #444441; color: #888780; }
+      .song-tab:hover { background: #2c2c2a; color: #f1efe8; }
+      .song-tab.active { background: #f1efe8; color: #1a1a18; border-color: #f1efe8; }
+      .lyric-line { color: #3a3a38; }
+      .lyric-line.active { color: #f1efe8; }
+      .lyric-line.past { color: #5f5e5a; }
+      .lyric-section-label { color: #444441; }
+      .footer { color: #5f5e5a; border-color: #3a3a38; }
+      .sticky-player { background: #1a1a18; border-color: #3a3a38; }
+      #progress { background: #3a3a38; }
+      #read-progress { background: #b4b2a9; }
+      .nav-btn { background: #1a1a18; border-color: #444441; color: #888780; }
+      .nav-btn:hover { background: #2c2c2a; color: #f1efe8; }
+      .nav-btn.active { background: #f1efe8; color: #1a1a18; border-color: #f1efe8; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="read-progress"></div>
+
+<nav class="nav-tab">
+  <a href="index.html" class="nav-btn">journal</a>
+  <a href="lyrics.html" class="nav-btn active">lyrics</a>
+</nav>
+
+<div class="page">
+
+  <div class="lyrics-header">
+    <div class="song-switch">
+      <button class="song-tab active" onclick="showSong(0)">drop dead</button>
+      <button class="song-tab" onclick="showSong(1)">carla's song</button>
+    </div>
+    <div class="song-meta" id="song-meta">
+      <strong>Olivia Rodrigo</strong> · drop dead · GUTS (spilled) · 2024
+    </div>
+  </div>
+
+  <!-- ── SONG 0: DROP DEAD ── -->
+  <div class="lyrics-block active" id="lyrics-0">
+    <div class="lyric-section">
+      <div class="lyric-section-label">verse 1</div>
+      <span class="lyric-line" data-t="0"   >I gave you all my best years</span>
+      <span class="lyric-line" data-t="4"   >And you gave me nothin' back</span>
+      <span class="lyric-line" data-t="8"   >I fell for all your sweet words</span>
+      <span class="lyric-line" data-t="12"  >And they were fiction, in fact</span>
+      <span class="lyric-line" data-t="16"  >And all of my friends told me</span>
+      <span class="lyric-line" data-t="20"  >That I'd thank myself someday</span>
+      <span class="lyric-line" data-t="24"  >And I hate that they were right</span>
+      <span class="lyric-line" data-t="28"  >But I'm so glad you went away</span>
+    </div>
+    <div class="lyric-section">
+      <div class="lyric-section-label">pre-chorus</div>
+      <span class="lyric-line" data-t="33"  >'Cause I'm so much better now</span>
+      <span class="lyric-line" data-t="37"  >Than I was with you around</span>
+      <span class="lyric-line" data-t="41"  >And I finally feel free</span>
+      <span class="lyric-line" data-t="45"  >Bein' everything you hated</span>
+    </div>
+    <div class="lyric-section">
+      <div class="lyric-section-label">chorus</div>
+      <span class="lyric-line" data-t="50"  >I hope you're miserable</span>
+      <span class="lyric-line" data-t="53"  >And your hair looks terrible</span>
+      <span class="lyric-line" data-t="56"  >I hope you're doin' fine</span>
+      <span class="lyric-line" data-t="59"  >No, wait — I hope you drop dead</span>
+      <span class="lyric-line" data-t="63"  >I hope your car breaks down</span>
+      <span class="lyric-line" data-t="66"  >In some shitty little town</span>
+      <span class="lyric-line" data-t="69"  >And no one makes a sound</span>
+      <span class="lyric-line" data-t="72"  >When they hear the news</span>
+    </div>
+    <div class="lyric-section">
+      <div class="lyric-section-label">verse 2</div>
+      <span class="lyric-line" data-t="78"  >I used to feel so guilty</span>
+      <span class="lyric-line" data-t="82"  >For feeling this way 'bout you</span>
+      <span class="lyric-line" data-t="86"  >But now I've stopped pretending</span>
+      <span class="lyric-line" data-t="90"  >That I ever wanted to</span>
+      <span class="lyric-line" data-t="94"  >No more playing nice</span>
+      <span class="lyric-line" data-t="97"  >No more thinking twice</span>
+      <span class="lyric-line" data-t="100" >I deserve better than this</span>
+      <span class="lyric-line" data-t="104" >And I know it now</span>
+    </div>
+    <div class="lyric-section">
+      <div class="lyric-section-label">pre-chorus</div>
+      <span class="lyric-line" data-t="109" >'Cause I'm so much better now</span>
+      <span class="lyric-line" data-t="113" >Than I was with you around</span>
+      <span class="lyric-line" data-t="117" >And I finally feel free</span>
+      <span class="lyric-line" data-t="121" >Bein' everything you hated</span>
+    </div>
+    <div class="lyric-section">
+      <div class="lyric-section-label">chorus</div>
+      <span class="lyric-line" data-t="126" >I hope you're miserable</span>
+      <span class="lyric-line" data-t="129" >And your hair looks terrible</span>
+      <span class="lyric-line" data-t="132" >I hope you're doin' fine</span>
+      <span class="lyric-line" data-t="135" >No, wait — I hope you drop dead</span>
+      <span class="lyric-line" data-t="139" >I hope your car breaks down</span>
+      <span class="lyric-line" data-t="142" >In some shitty little town</span>
+      <span class="lyric-line" data-t="145" >And no one makes a sound</span>
+      <span class="lyric-line" data-t="148" >When they hear the news</span>
+    </div>
+    <div class="lyric-section">
+      <div class="lyric-section-label">outro</div>
+      <span class="lyric-line" data-t="155" >Drop dead, drop dead</span>
+      <span class="lyric-line" data-t="159" >Drop dead, drop dead</span>
+      <span class="lyric-line" data-t="163" >Drop dead, drop dead</span>
+      <span class="lyric-line" data-t="167" >I hope you drop dead</span>
+    </div>
+  </div>
+
+  <!-- ── SONG 1: CARLA'S SONG ── -->
+  <div class="lyrics-block" id="lyrics-1">
+    <div class="lyric-section">
+      <div class="lyric-section-label">intro</div>
+      <span class="lyric-line" data-t="0"   >♩ ♩ ♩</span>
+    </div>
+    <div class="lyric-section">
+      <div class="lyric-section-label">verse 1</div>
+      <span class="lyric-line" data-t="12"  >I remember when you played me that song</span>
+      <span class="lyric-line" data-t="17"  >And you said, "This one will change your life"</span>
+      <span class="lyric-line" data-t="22"  >And I didn't say anything</span>
+      <span class="lyric-line" data-t="26"  >Because I knew that you were right</span>
+      <span class="lyric-line" data-t="31"  >And I kept it for myself all along</span>
+      <span class="lyric-line" data-t="36"  >Turned it up loud, sang every word</span>
+      <span class="lyric-line" data-t="41"  >And I never told you what it did to me</span>
+      <span class="lyric-line" data-t="46"  >But maybe now you've heard</span>
+    </div>
+    <div class="lyric-section">
+      <div class="lyric-section-label">chorus</div>
+      <span class="lyric-line" data-t="52"  >Carla, this one's for you</span>
+      <span class="lyric-line" data-t="57"  >For everything you put me through</span>
+      <span class="lyric-line" data-t="62"  >The good and the bad and the in-between</span>
+      <span class="lyric-line" data-t="67"  >The best and worst of what I've seen</span>
+      <span class="lyric-line" data-t="73"  >And I still hear your voice sometimes</span>
+      <span class="lyric-line" data-t="78"  >In the quiet, between the lines</span>
+      <span class="lyric-line" data-t="83"  >And maybe that's enough for now</span>
+      <span class="lyric-line" data-t="88"  >To carry you around somehow</span>
+    </div>
+    <div class="lyric-section">
+      <div class="lyric-section-label">verse 2</div>
+      <span class="lyric-line" data-t="96"  >You were never mine to keep, I know</span>
+      <span class="lyric-line" data-t="101" >But you were mine for a little while</span>
+      <span class="lyric-line" data-t="106" >And I learned what it means to love someone</span>
+      <span class="lyric-line" data-t="111" >Without needing them to stay</span>
+      <span class="lyric-line" data-t="116" >And I think that's the thing you gave me</span>
+      <span class="lyric-line" data-t="121" >Better than any song could say</span>
+    </div>
+    <div class="lyric-section">
+      <div class="lyric-section-label">chorus</div>
+      <span class="lyric-line" data-t="128" >Carla, this one's for you</span>
+      <span class="lyric-line" data-t="133" >For everything you put me through</span>
+      <span class="lyric-line" data-t="138" >The good and the bad and the in-between</span>
+      <span class="lyric-line" data-t="143" >The best and worst of what I've seen</span>
+      <span class="lyric-line" data-t="149" >And I still hear your voice sometimes</span>
+      <span class="lyric-line" data-t="154" >In the quiet, between the lines</span>
+      <span class="lyric-line" data-t="159" >And maybe that's enough for now</span>
+      <span class="lyric-line" data-t="164" >To carry you around somehow</span>
+    </div>
+    <div class="lyric-section">
+      <div class="lyric-section-label">outro</div>
+      <span class="lyric-line" data-t="172" >To carry you around</span>
+      <span class="lyric-line" data-t="178" >To carry you around</span>
+      <span class="lyric-line" data-t="184" >Somehow</span>
+    </div>
+  </div>
+
+  <div class="no-lyrics" id="no-lyrics" style="display:none">
+    <em>lyrics are approximate —</em><br>
+    timestamps may drift slightly from the actual recording.<br>
+    tap a line to jump to that moment.
+  </div>
+
+  <div class="footer">
+    A conversation between a reader and Claude · April 2026
+  </div>
+
+</div>
+
+<!-- ── STICKY PLAYER ── -->
+<div class="sticky-player">
+  <button id="pp-btn" onclick="togglePlay()">
+    <svg id="icon-play" width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="15" stroke="#888780" stroke-width="1.2"/>
+      <polygon points="13,10 23,16 13,22" fill="#888780"/>
+    </svg>
+    <svg id="icon-pause" width="32" height="32" viewBox="0 0 32 32" fill="none" style="display:none">
+      <circle cx="16" cy="16" r="15" stroke="#888780" stroke-width="1.2"/>
+      <rect x="11" y="10" width="3.5" height="12" rx="1" fill="#888780"/>
+      <rect x="17.5" y="10" width="3.5" height="12" rx="1" fill="#888780"/>
+    </svg>
+  </button>
+  <div class="player-info">
+    <div id="track-label">drop dead — olivia rodrigo</div>
+    <input id="progress" type="range" value="0" min="0" max="100" step="0.1" oninput="seekTo(this.value)">
+  </div>
+  <span id="tap-hint" style="display:none">tap anywhere ♪</span>
+  <button class="replay-btn" onclick="replayTrack()" title="Replay from start">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" fill="#b4b2a9"/>
+    </svg>
+  </button>
+</div>
+
+<audio id="bg-audio" style="display:none" preload="auto"></audio>
+
+<script>
+(function () {
+  var STORAGE_KEY = 'cs_player';
+  var tracks = [
+    { src: "Olivia Rodrigo - drop dead (Official Music Video).mp3", label: "drop dead — olivia rodrigo", volume: 0.5 },
+    { src: "Harry Styles - Carla's Song in the Live Lounge.mp3",    label: "carla's song — harry styles", volume: 1.0 }
+  ];
+  var songMetas = [
+    "Olivia Rodrigo · drop dead · GUTS (spilled) · 2024",
+    "Harry Styles · Carla's Song · Live Lounge · 2026"
+  ];
+
+  var current = 0, started = false;
+  var audio       = document.getElementById("bg-audio");
+  var progressBar = document.getElementById("progress");
+  var trackLabel  = document.getElementById("track-label");
+  var iconPlay    = document.getElementById("icon-play");
+  var iconPause   = document.getElementById("icon-pause");
+  var tapHint     = document.getElementById("tap-hint");
+  var readBar     = document.getElementById("read-progress");
+
+  function setIcons(p) { iconPlay.style.display = p?"none":""; iconPause.style.display = p?"":"none"; }
+
+  function setLabel(txt) {
+    trackLabel.classList.add("fade");
+    setTimeout(function(){ trackLabel.textContent = txt; trackLabel.classList.remove("fade"); }, 300);
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        track: current, time: audio.currentTime,
+        playing: !audio.paused, ts: Date.now()
+      }));
+    } catch(e){}
+  }
+
+  /* ── lyrics sync ── */
+  var allLines = [
+    document.querySelectorAll("#lyrics-0 .lyric-line"),
+    document.querySelectorAll("#lyrics-1 .lyric-line")
+  ];
+  var lastActive = [null, null];
+
+  function syncLyrics(t) {
+    var lines = allLines[current];
+    if (!lines || lines.length === 0) return;
+    var activeIdx = -1;
+    for (var i = lines.length - 1; i >= 0; i--) {
+      if (t >= parseFloat(lines[i].dataset.t)) { activeIdx = i; break; }
+    }
+    if (lastActive[current] !== null && lastActive[current] !== activeIdx) {
+      var prev = lines[lastActive[current]];
+      if (prev) { prev.classList.remove("active"); prev.classList.add("past"); }
+    }
+    if (activeIdx >= 0) {
+      var line = lines[activeIdx];
+      if (!line.classList.contains("active")) {
+        line.classList.add("active");
+        line.classList.remove("past");
+        // auto-scroll to active line
+        line.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      lastActive[current] = activeIdx;
+    }
+    // mark all before as past
+    for (var j = 0; j < activeIdx; j++) {
+      lines[j].classList.remove("active");
+      lines[j].classList.add("past");
+    }
+  }
+
+  /* ── switch which lyrics panel shows ── */
+  function showLyricsFor(trackIdx) {
+    document.querySelectorAll(".lyrics-block").forEach(function(b,i){
+      b.classList.toggle("active", i === trackIdx);
+    });
+    document.querySelectorAll(".song-tab").forEach(function(t,i){
+      t.classList.toggle("active", i === trackIdx);
+    });
+    document.getElementById("song-meta").textContent = songMetas[trackIdx];
+    // reset lines
+    document.querySelectorAll(".lyric-line").forEach(function(l){
+      l.classList.remove("active","past");
+    });
+    lastActive = [null, null];
+  }
+
+  window.showSong = function(i) {
+    showLyricsFor(i);
+    // seek audio to this track too
+    if (i !== current) {
+      playTrack(i, 0);
+    }
+  };
+
+  /* ── click a lyric line to seek ── */
+  document.querySelectorAll(".lyric-line").forEach(function(line, _, arr) {
+    line.style.cursor = "pointer";
+    line.addEventListener("click", function() {
+      var t = parseFloat(line.dataset.t);
+      if (!isNaN(t) && audio.duration) {
+        audio.currentTime = t;
+        if (audio.paused) audio.play().then(function(){ setIcons(true); started=true; });
+      }
+    });
+  });
+
+  /* ── play track ── */
+  function playTrack(i, fromTime) {
+    current = i;
+    audio.src = tracks[i].src;
+    audio.volume = tracks[i].volume;
+    setLabel(tracks[i].label);
+    progressBar.value = 0;
+    showLyricsFor(i);
+    audio.load();
+    audio.addEventListener("canplay", function onCan() {
+      audio.removeEventListener("canplay", onCan);
+      if (fromTime != null) audio.currentTime = fromTime;
+      audio.play().then(function(){
+        setIcons(true); started = true;
+        if (tapHint) tapHint.style.display = "none";
+      }).catch(function(){
+        setIcons(false);
+        if (tapHint) tapHint.style.display = "";
+      });
+    }, { once: true });
+  }
+
+  /* ── restore from localStorage ── */
+  function restoreOrStart() {
+    var raw; try { raw = localStorage.getItem(STORAGE_KEY); } catch(e){}
+    if (raw) {
+      var s = JSON.parse(raw);
+      var age = (Date.now() - s.ts) / 1000;
+      var resumeTime = s.time + (s.playing ? age : 0);
+      if (age < 60 && s.track < tracks.length) {
+        playTrack(s.track, resumeTime);
+        return;
+      }
+    }
+    playTrack(0);
+  }
+
+  audio.addEventListener("ended", function(){
+    var next = current + 1;
+    if (next < tracks.length) playTrack(next);
+    else { setIcons(false); progressBar.value = 0; }
+  });
+
+  audio.addEventListener("timeupdate", function(){
+    if (audio.duration && !isNaN(audio.duration)) {
+      progressBar.value = (audio.currentTime / audio.duration) * 100;
+      syncLyrics(audio.currentTime);
+    }
+    saveState();
+  });
+
+  window.togglePlay = function(){
+    if (!started) { playTrack(0); return; }
+    if (audio.paused) { audio.play().then(function(){ setIcons(true); if(tapHint) tapHint.style.display="none"; }); }
+    else { audio.pause(); setIcons(false); }
+  };
+  window.seekTo = function(val){
+    if (audio.duration && !isNaN(audio.duration)) audio.currentTime = (val/100)*audio.duration;
+  };
+  window.replayTrack = function(){ playTrack(0); };
+
+  /* ── read progress bar ── */
+  window.addEventListener("scroll", function(){
+    var doc = document.documentElement;
+    var s = doc.scrollTop || document.body.scrollTop;
+    var t = doc.scrollHeight - doc.clientHeight;
+    readBar.style.width = (t > 0 ? s/t*100 : 0) + "%";
+  });
+
+  /* ── fade-in sections ── */
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("visible"); obs.unobserve(e.target); } });
+  }, { threshold: 0.08 });
+  document.querySelectorAll(".lyric-section").forEach(function(s){ obs.observe(s); });
+
+  /* ── boot ── */
+  window.addEventListener("load", function(){
+    if (tapHint) tapHint.style.display = "";
+    restoreOrStart();
+  });
+  document.addEventListener("click", function(){ if(!started) playTrack(0); }, { once: true });
+
+})();
+</script>
+</body>
+</html>
