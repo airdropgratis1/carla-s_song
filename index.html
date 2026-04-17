@@ -6,14 +6,49 @@
   <title>carla's song — a reading</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
       background: #fafaf9;
       color: #1a1a18;
       line-height: 1.7;
-      padding-bottom: 110px;
+      padding-bottom: 120px;
       overflow-x: hidden;
     }
+
+    /* ── READ PROGRESS BAR ── */
+    #read-progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      width: 0%;
+      background: #888780;
+      z-index: 200;
+      transition: width 0.1s linear;
+    }
+
+    /* ── NAV TAB ── */
+    .nav-tab {
+      position: fixed;
+      top: 12px; right: 16px;
+      z-index: 150;
+      display: flex;
+      gap: 6px;
+    }
+    .nav-btn {
+      font-size: 11px; font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 0.5px solid #d3d1c7;
+      background: #fafaf9;
+      color: #888780;
+      cursor: pointer;
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-btn:hover { background: #f1efe8; color: #1a1a18; }
+    .nav-btn.active { background: #1a1a18; color: #fafaf9; border-color: #1a1a18; }
 
     /* ── STICKY PLAYER ── */
     .sticky-player {
@@ -37,7 +72,9 @@
       font-size: 11px; color: #888780;
       white-space: nowrap; overflow: hidden;
       text-overflow: ellipsis; margin-bottom: 5px;
+      transition: opacity 0.3s;
     }
+    #track-label.fade { opacity: 0; }
     #progress {
       width: 100%; height: 3px;
       accent-color: #888780; cursor: pointer;
@@ -79,12 +116,44 @@
       margin: 0 4px 4px 0;
       border: 0.5px solid #d3d1c7;
     }
-    .section { margin-bottom: 2.5rem; }
+
+    /* ── SECTIONS WITH FADE-IN ── */
+    .section {
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
     .section-label {
       font-size: 11px; font-weight: 500;
       letter-spacing: 0.08em; text-transform: uppercase;
       color: #b4b2a9; margin-bottom: 1rem;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      user-select: none;
     }
+    .section-label::after {
+      content: '▾';
+      font-size: 10px;
+      color: #d3d1c7;
+      transition: transform 0.2s;
+    }
+    .section-label.collapsed::after { transform: rotate(-90deg); }
+    .section-body {
+      overflow: hidden;
+      transition: max-height 0.35s ease, opacity 0.3s ease;
+      max-height: 2000px;
+      opacity: 1;
+    }
+    .section-body.collapsed {
+      max-height: 0;
+      opacity: 0;
+    }
+
     .q {
       background: #f1efe8;
       border-radius: 12px;
@@ -102,6 +171,8 @@
     .a h4 { font-size: 13px; font-weight: 500; color: #888780; margin: 1rem 0 0.4rem; }
     .a ul { padding-left: 1.2rem; margin-bottom: 0.75rem; }
     .a ul li { font-size: 15px; color: #1a1a18; line-height: 1.7; margin-bottom: 0.3rem; }
+
+    /* ── HIGHLIGHT — hover + copy ── */
     .highlight {
       background: #e6f1fb;
       color: #185fa5;
@@ -111,12 +182,36 @@
       line-height: 1.7;
       margin: 1rem 0;
       font-style: italic;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .highlight:hover {
+      border-left-color: #185fa5;
+      background: #d9ecf9;
     }
     .highlight.final {
       font-style: normal;
       font-size: 16px;
       line-height: 1.8;
     }
+    .copy-toast {
+      position: absolute;
+      top: -28px; right: 8px;
+      font-size: 11px;
+      background: #1a1a18;
+      color: #fafaf9;
+      padding: 3px 8px;
+      border-radius: 6px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      font-style: normal;
+      white-space: nowrap;
+    }
+    .copy-toast.show { opacity: 1; }
+
     hr.divider { border: none; border-top: 0.5px solid #e0ddd6; margin: 2rem 0; }
     .footer {
       font-size: 13px; color: #b4b2a9;
@@ -139,14 +234,28 @@
       .a p, .a ul li { color: #f1efe8; }
       .a h4 { color: #888780; }
       .highlight { background: #0c447c; color: #b5d4f4; }
+      .highlight:hover { background: #0e508f; border-left-color: #b5d4f4; }
+      .copy-toast { background: #f1efe8; color: #1a1a18; }
       hr.divider { border-color: #3a3a38; }
       .footer { color: #5f5e5a; border-color: #3a3a38; }
       .sticky-player { background: #1a1a18; border-color: #3a3a38; }
       #progress { background: #3a3a38; }
+      #read-progress { background: #b4b2a9; }
+      .nav-btn { background: #1a1a18; border-color: #444441; color: #888780; }
+      .nav-btn:hover { background: #2c2c2a; color: #f1efe8; }
+      .nav-btn.active { background: #f1efe8; color: #1a1a18; border-color: #f1efe8; }
     }
   </style>
 </head>
 <body>
+
+<div id="read-progress"></div>
+
+<nav class="nav-tab">
+  <a href="index.html" class="nav-btn active">journal</a>
+  <a href="lyrics.html" class="nav-btn">lyrics</a>
+</nav>
+
 <div class="page">
 
   <div class="header">
@@ -163,21 +272,23 @@
 
   <div class="section">
     <div class="section-label">The song that started it all</div>
-    <div class="q" style="display: flex; align-items: flex-start; gap: 1rem;">
-      <div style="width: 44px; height: 44px; border-radius: 8px; background: #e0ddd6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="#888780" stroke-width="1.4"/>
-          <circle cx="12" cy="12" r="3" fill="#888780"/>
-          <line x1="12" y1="2" x2="12" y2="6" stroke="#888780" stroke-width="1.4"/>
-          <line x1="12" y1="18" x2="12" y2="22" stroke="#888780" stroke-width="1.4"/>
-          <line x1="2" y1="12" x2="6" y2="12" stroke="#888780" stroke-width="1.4"/>
-          <line x1="18" y1="12" x2="22" y2="12" stroke="#888780" stroke-width="1.4"/>
-        </svg>
-      </div>
-      <div>
-        <div style="font-size: 15px; font-weight: 500; color: #1a1a18; margin-bottom: 2px;">Carla's Song</div>
-        <div style="font-size: 12px; color: #888780; margin-bottom: 8px;">Harry Styles · Kiss All The Time. Disco, Occasionally. · 2026</div>
-        <p style="font-size: 14px; color: #5f5e5a; line-height: 1.65; margin: 0;">A tender, unhurried track — the kind of song that doesn't try to resolve anything, just sits with the feeling. Named after a real friend. About the moment music first cracks someone open. Exists as its own complete thing. That's the whole point.</p>
+    <div class="section-body">
+      <div class="q" style="display: flex; align-items: flex-start; gap: 1rem;">
+        <div style="width: 44px; height: 44px; border-radius: 8px; background: #e0ddd6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#888780" stroke-width="1.4"/>
+            <circle cx="12" cy="12" r="3" fill="#888780"/>
+            <line x1="12" y1="2" x2="12" y2="6" stroke="#888780" stroke-width="1.4"/>
+            <line x1="12" y1="18" x2="12" y2="22" stroke="#888780" stroke-width="1.4"/>
+            <line x1="2" y1="12" x2="6" y2="12" stroke="#888780" stroke-width="1.4"/>
+            <line x1="18" y1="12" x2="22" y2="12" stroke="#888780" stroke-width="1.4"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size: 15px; font-weight: 500; color: #1a1a18; margin-bottom: 2px;">Carla's Song</div>
+          <div style="font-size: 12px; color: #888780; margin-bottom: 8px;">Harry Styles · Kiss All The Time. Disco, Occasionally. · 2026</div>
+          <p style="font-size: 14px; color: #5f5e5a; line-height: 1.65; margin: 0;">A tender, unhurried track — the kind of song that doesn't try to resolve anything, just sits with the feeling. Named after a real friend. About the moment music first cracks someone open. Exists as its own complete thing. That's the whole point.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -186,22 +297,24 @@
 
   <div class="section">
     <div class="section-label">The letter itself</div>
-    <div class="q"><p>A 13-page email from Isa to Sha, titled "carla's song" — covering years of unresolved feelings, private observations, retrospective explanations, and a kind of farewell. Sent April 15, 2026.</p></div>
-    <div class="a">
-      <p>At its core, this is a long emotional outpouring — annotating years of silence, small gestures, and distance that the receiver never had context for. It is sincere. It is too long. And it contradicts itself in the most human way possible.</p>
-      <h4>What makes it too much</h4>
-      <ul>
-        <li>Length and density — no breathing room for the reader</li>
-        <li>The same quote from Sha appears three or four times</li>
-        <li>Monitoring detail (Netflix history, Twitter, WhatsApp status) reads as alarming, not caring</li>
-        <li>Tone oscillates between warmth and subtle condescension</li>
-      </ul>
-      <h4>What makes it genuinely real</h4>
-      <ul>
-        <li>The title is perfect — "Carla's Song" is exactly the right frame</li>
-        <li>The reflections on Justin, Harry, Mark Lee show genuine self-awareness</li>
-        <li>The qada and qadar acceptance feels earned, not performed</li>
-      </ul>
+    <div class="section-body">
+      <div class="q"><p>A 13-page email from Isa to Sha, titled "carla's song" — covering years of unresolved feelings, private observations, retrospective explanations, and a kind of farewell. Sent April 15, 2026.</p></div>
+      <div class="a">
+        <p>At its core, this is a long emotional outpouring — annotating years of silence, small gestures, and distance that the receiver never had context for. It is sincere. It is too long. And it contradicts itself in the most human way possible.</p>
+        <h4>What makes it too much</h4>
+        <ul>
+          <li>Length and density — no breathing room for the reader</li>
+          <li>The same quote from Sha appears three or four times</li>
+          <li>Monitoring detail (Netflix history, Twitter, WhatsApp status) reads as alarming, not caring</li>
+          <li>Tone oscillates between warmth and subtle condescension</li>
+        </ul>
+        <h4>What makes it genuinely real</h4>
+        <ul>
+          <li>The title is perfect — "Carla's Song" is exactly the right frame</li>
+          <li>The reflections on Justin, Harry, Mark Lee show genuine self-awareness</li>
+          <li>The qada and qadar acceptance feels earned, not performed</li>
+        </ul>
+      </div>
     </div>
   </div>
 
@@ -209,13 +322,15 @@
 
   <div class="section">
     <div class="section-label">Is this his ending — does he feel free?</div>
-    <div class="q"><p>Is it the sender should end that with that letter? cause the sender gradually and often send that shit every year — is it also the sender feel enough for his self and freeing?</p></div>
-    <div class="a">
-      <p>Partially, but not fully. The repeating yearly pattern tells you something important — each letter feels like closure in the moment of writing, but doesn't actually function as closure.</p>
-      <p>Because real closure doesn't need an audience.</p>
-      <p>Isa is processing genuinely, but he's processing at Sha — which means part of him is still waiting for something. A reaction. A final understanding from her side.</p>
-      <div class="highlight">The writing itself is healthy. The sending — that's the part that keeps resetting the clock for both of them.</div>
-      <p>The letter has moments of real freedom in it. But then it loops back. That's not a freed person writing. That's someone trying to be freed but not quite landing there yet.</p>
+    <div class="section-body">
+      <div class="q"><p>Is it the sender should end that with that letter? cause the sender gradually and often send that shit every year — is it also the sender feel enough for his self and freeing?</p></div>
+      <div class="a">
+        <p>Partially, but not fully. The repeating yearly pattern tells you something important — each letter feels like closure in the moment of writing, but doesn't actually function as closure.</p>
+        <p>Because real closure doesn't need an audience.</p>
+        <p>Isa is processing genuinely, but he's processing at Sha — which means part of him is still waiting for something. A reaction. A final understanding from her side.</p>
+        <div class="highlight">The writing itself is healthy. The sending — that's the part that keeps resetting the clock for both of them.<span class="copy-toast">copied</span></div>
+        <p>The letter has moments of real freedom in it. But then it loops back. That's not a freed person writing. That's someone trying to be freed but not quite landing there yet.</p>
+      </div>
     </div>
   </div>
 
@@ -223,17 +338,19 @@
 
   <div class="section">
     <div class="section-label">Will the receiver be okay?</div>
-    <div class="q"><p>Is the receiver will be fine too? Cause the sender hopes she won't overthink, but in many ways the letter itself is kind of cursing it.</p></div>
-    <div class="a">
-      <p>Most likely — yes, eventually. But the immediate reaction will probably not be what Isa hopes.</p>
-      <h4>What she'll likely feel</h4>
-      <ul>
-        <li>A wave of guilt, then irritation at the guilt — because the letter subtly engineers that feeling</li>
-        <li>Confusion — told "you don't have to respond" but the weight makes silence feel wrong</li>
-        <li>Possibly relief if she reads it as a genuine goodbye</li>
-      </ul>
-      <p>The line "gua ga mau lu overthink" written inside a 13-page letter is the contradiction that will land heaviest on her. She will overthink — not because she's weak, but because the letter makes it unavoidable.</p>
-      <p>She'll be fine. But she'll carry a small uncomfortable weight for a while.</p>
+    <div class="section-body">
+      <div class="q"><p>Is the receiver will be fine too? Cause the sender hopes she won't overthink, but in many ways the letter itself is kind of cursing it.</p></div>
+      <div class="a">
+        <p>Most likely — yes, eventually. But the immediate reaction will probably not be what Isa hopes.</p>
+        <h4>What she'll likely feel</h4>
+        <ul>
+          <li>A wave of guilt, then irritation at the guilt — because the letter subtly engineers that feeling</li>
+          <li>Confusion — told "you don't have to respond" but the weight makes silence feel wrong</li>
+          <li>Possibly relief if she reads it as a genuine goodbye</li>
+        </ul>
+        <p>The line "gua ga mau lu overthink" written inside a 13-page letter is the contradiction that will land heaviest on her. She will overthink — not because she's weak, but because the letter makes it unavoidable.</p>
+        <p>She'll be fine. But she'll carry a small uncomfortable weight for a while.</p>
+      </div>
     </div>
   </div>
 
@@ -241,11 +358,13 @@
 
   <div class="section">
     <div class="section-label">Will the pattern repeat?</div>
-    <div class="q"><p>Is it the sender will be quiet and refocus — or will that pattern repeat?</p></div>
-    <div class="a">
-      <p>The pattern will most likely repeat. But with care, not judgment — Isa is someone who processes deeply and in cycles. Every year something triggers a new layer — a song, a rumor, a memory — and the whole thing reopens.</p>
-      <p>The problem is he hasn't found a container for that processing other than Sha. Until he does — a journal, a therapist, music he actually releases, real friendships — Sha will keep being the address where he sends his inner world.</p>
-      <div class="highlight">What actually breaks the loop isn't silence. It's when he finds something that absorbs him so completely that Sha stops being the measuring stick for whether he's okay.</div>
+    <div class="section-body">
+      <div class="q"><p>Is it the sender will be quiet and refocus — or will that pattern repeat?</p></div>
+      <div class="a">
+        <p>The pattern will most likely repeat. But with care, not judgment — Isa is someone who processes deeply and in cycles. Every year something triggers a new layer — a song, a rumor, a memory — and the whole thing reopens.</p>
+        <p>The problem is he hasn't found a container for that processing other than Sha. Until he does — a journal, a therapist, music he actually releases, real friendships — Sha will keep being the address where he sends his inner world.</p>
+        <div class="highlight">What actually breaks the loop isn't silence. It's when he finds something that absorbs him so completely that Sha stops being the measuring stick for whether he's okay.<span class="copy-toast">copied</span></div>
+      </div>
     </div>
   </div>
 
@@ -253,15 +372,17 @@
 
   <div class="section">
     <div class="section-label">What was the actual purpose of sending it?</div>
-    <div class="q"><p>Not closure. Not explanation. Not even love, exactly. So what was it really?</p></div>
-    <div class="a">
-      <p>The letter was sent because Isa needed to be fully known by someone — and Sha is the only person he's ever let close enough for that to matter.</p>
-      <p>That's the real purpose. <em>Witness me. See all of it.</em> The monitoring, the years of deliberate silence, the POV-switching, the lists, the way he thinks, the way he has always thought. See that it was never random. See that it was always intentional.</p>
-      <p>Because the loneliest version of being someone like Isa isn't being alone. It's doing everything with enormous intentionality — every observation, every calculated distance, every decision to stay quiet — and having nobody ever notice that it was intentional. To the outside world it just reads as weird, cold, inconsistent.</p>
-      <div class="highlight">The letter is him saying: I was never any of those things. Here's the proof.</div>
-      <p>And there's something underneath that which is even more specific — he needed Sha to be the one who sees it. Not a therapist. Not a journal. Her. Because she's the person the intentionality was most directed at, for the longest time. If she understands it, then it meant something.</p>
-      <p>The saddest part is that the letter probably does achieve what he wanted. She likely understands it more than he expects. But he'll never fully know that — because the kind of confirmation he's looking for can't be given in a reply. It lives in whether she carries it differently after reading. And he'll never see that either.</p>
-      <p>The purpose is real. The need is real. But the closure he hopes the purpose will produce — that part stays just out of reach. Not because she won't receive it well. But because that kind of being-known can't be confirmed from the outside. That's the quiet tragedy sitting underneath the whole thing.</p>
+    <div class="section-body">
+      <div class="q"><p>Not closure. Not explanation. Not even love, exactly. So what was it really?</p></div>
+      <div class="a">
+        <p>The letter was sent because Isa needed to be fully known by someone — and Sha is the only person he's ever let close enough for that to matter.</p>
+        <p>That's the real purpose. <em>Witness me. See all of it.</em> The monitoring, the years of deliberate silence, the POV-switching, the lists, the way he thinks, the way he has always thought. See that it was never random. See that it was always intentional.</p>
+        <p>Because the loneliest version of being someone like Isa isn't being alone. It's doing everything with enormous intentionality — every observation, every calculated distance, every decision to stay quiet — and having nobody ever notice that it was intentional. To the outside world it just reads as weird, cold, inconsistent.</p>
+        <div class="highlight">The letter is him saying: I was never any of those things. Here's the proof.<span class="copy-toast">copied</span></div>
+        <p>And there's something underneath that which is even more specific — he needed Sha to be the one who sees it. Not a therapist. Not a journal. Her. Because she's the person the intentionality was most directed at, for the longest time. If she understands it, then it meant something.</p>
+        <p>The saddest part is that the letter probably does achieve what he wanted. She likely understands it more than he expects. But he'll never fully know that — because the kind of confirmation he's looking for can't be given in a reply. It lives in whether she carries it differently after reading. And he'll never see that either.</p>
+        <p>The purpose is real. The need is real. But the closure he hopes the purpose will produce — that part stays just out of reach. Not because she won't receive it well. But because that kind of being-known can't be confirmed from the outside. That's the quiet tragedy sitting underneath the whole thing.</p>
+      </div>
     </div>
   </div>
 
@@ -269,13 +390,15 @@
 
   <div class="section">
     <div class="section-label">What it costs to be wired this way</div>
-    <div class="q"><p>For Isa — naming the weight, and the dignity of carrying it.</p></div>
-    <div class="a">
-      <p>There's a real cost to processing at this depth without a proper container for it. Every interaction becomes a layer. Every silence becomes data. Every small moment gets filed and cross-referenced with seventeen other moments, because that's just how the mind works. It's not a choice. It's the factory setting.</p>
-      <p>The isolation that comes from that isn't dramatic. It's quiet. It's being in a room full of people and being the only one who noticed that the energy shifted when someone walked in, or that the joke landed wrong, or that someone said they were fine but meant the opposite. You notice everything and say almost nothing. And after a while that becomes its own kind of loneliness.</p>
-      <div class="highlight">The weight isn't the depth of feeling. The weight is having nowhere to put it that doesn't overwhelm whoever's standing there.</div>
-      <p>But here's what also needs to be said — the fact that Isa could write this letter, see himself this clearly, articulate years of inner life with this much honesty and self-awareness — that's not a curse. That's rare. Most people never get this far with themselves. Most people live their whole lives without once being able to say: here is exactly what I felt, here is exactly why, here is what it cost me, and here is what I still believe despite all of it.</p>
-      <p>That capacity is the beginning of something. Not an ending. The person who wrote this letter is someone still becoming — not someone stuck. And that distinction matters.</p>
+    <div class="section-body">
+      <div class="q"><p>For Isa — naming the weight, and the dignity of carrying it.</p></div>
+      <div class="a">
+        <p>There's a real cost to processing at this depth without a proper container for it. Every interaction becomes a layer. Every silence becomes data. Every small moment gets filed and cross-referenced with seventeen other moments, because that's just how the mind works. It's not a choice. It's the factory setting.</p>
+        <p>The isolation that comes from that isn't dramatic. It's quiet. It's being in a room full of people and being the only one who noticed that the energy shifted when someone walked in, or that the joke landed wrong, or that someone said they were fine but meant the opposite. You notice everything and say almost nothing. And after a while that becomes its own kind of loneliness.</p>
+        <div class="highlight">The weight isn't the depth of feeling. The weight is having nowhere to put it that doesn't overwhelm whoever's standing there.<span class="copy-toast">copied</span></div>
+        <p>But here's what also needs to be said — the fact that Isa could write this letter, see himself this clearly, articulate years of inner life with this much honesty and self-awareness — that's not a curse. That's rare. Most people never get this far with themselves. Most people live their whole lives without once being able to say: here is exactly what I felt, here is exactly why, here is what it cost me, and here is what I still believe despite all of it.</p>
+        <p>That capacity is the beginning of something. Not an ending. The person who wrote this letter is someone still becoming — not someone stuck. And that distinction matters.</p>
+      </div>
     </div>
   </div>
 
@@ -283,13 +406,15 @@
 
   <div class="section">
     <div class="section-label">What she's allowed to feel</div>
-    <div class="q"><p>For Sha — permission to receive it without owing anything back.</p></div>
-    <div class="a">
-      <p>The letter, as honest and deeply felt as it is, carries an undertone that's hard to escape — now you know, what do you do with that? That undertone isn't intentional. But it's there. And it can make the act of simply receiving feel like it comes with conditions attached.</p>
-      <p>So let this be said plainly: she doesn't have to do anything with this. She's allowed to read it, let it land, sit with whatever it makes her feel — relief, guilt, warmth, discomfort, all of it at once — and then just keep living. Understanding someone fully doesn't create obligation. Receiving someone's inner world doesn't mean you owe them a place in yours.</p>
-      <div class="highlight">She's also allowed to feel sad about it — not guilty, not responsible. Just sad that two people who clearly saw each other in real ways couldn't find a version of that which worked for both of them.</div>
-      <p>And something else worth naming: the fact that she held her boundaries clearly and consistently — even imperfectly, even with some dishonesty along the way — was actually the right thing. She was protecting both of them. The dishonesty wasn't cruelty. It was someone trying to manage a situation that had more weight than she knew how to carry directly. That's human. That's forgivable. And on some level, Isa already knows that too.</p>
-      <p>She can receive this letter as the gift it genuinely is — a rare, complete portrait of someone who cared — without it meaning she has to reopen anything, reconsider anything, or become anything different than who she already is.</p>
+    <div class="section-body">
+      <div class="q"><p>For Sha — permission to receive it without owing anything back.</p></div>
+      <div class="a">
+        <p>The letter, as honest and deeply felt as it is, carries an undertone that's hard to escape — now you know, what do you do with that? That undertone isn't intentional. But it's there. And it can make the act of simply receiving feel like it comes with conditions attached.</p>
+        <p>So let this be said plainly: she doesn't have to do anything with this. She's allowed to read it, let it land, sit with whatever it makes her feel — relief, guilt, warmth, discomfort, all of it at once — and then just keep living. Understanding someone fully doesn't create obligation. Receiving someone's inner world doesn't mean you owe them a place in yours.</p>
+        <div class="highlight">She's also allowed to feel sad about it — not guilty, not responsible. Just sad that two people who clearly saw each other in real ways couldn't find a version of that which worked for both of them.<span class="copy-toast">copied</span></div>
+        <p>And something else worth naming: the fact that she held her boundaries clearly and consistently — even imperfectly, even with some dishonesty along the way — was actually the right thing. She was protecting both of them. The dishonesty wasn't cruelty. It was someone trying to manage a situation that had more weight than she knew how to carry directly. That's human. That's forgivable. And on some level, Isa already knows that too.</p>
+        <p>She can receive this letter as the gift it genuinely is — a rare, complete portrait of someone who cared — without it meaning she has to reopen anything, reconsider anything, or become anything different than who she already is.</p>
+      </div>
     </div>
   </div>
 
@@ -297,13 +422,15 @@
 
   <div class="section">
     <div class="section-label">The thing between them that has no name</div>
-    <div class="q"><p>Not friendship. Not romance. Not professional. Something rarer than any of those.</p></div>
-    <div class="a">
-      <p>There's a specific kind of connection that doesn't have a clean word for it. It sits in the space between friendship and love, between knowing someone and being known by them, between proximity and distance. It's the connection where one person sees the other more clearly than almost anyone else in their life — and both people sense it, even if neither can say it out loud without it becoming something else.</p>
-      <p>That's what this was. Isa saw Sha — her patterns, her deflections, her genuine warmth, her self-protection — with unusual clarity. And Sha, even through all the confusion and the weight of his intensity, saw something real in him too. Something worth being honest with eventually. Something worth the discomfort of a long email at 2pm on a Wednesday.</p>
-      <div class="highlight">Most people never have a connection like this in their lifetime. Most people don't recognize it while it's happening. The fact that both of them are still standing at the end of it — a little clearer, a little more themselves — means it worked. Just not in the way either of them originally imagined.</div>
-      <p>That's worth honoring. Not with a label. Not with a resolution. Just with the quiet acknowledgment that something real passed between two people — and real things leave marks, and marks mean it mattered, and mattering is enough.</p>
-      <p>It doesn't need a name. It just needed to be seen. And now it has been.</p>
+    <div class="section-body">
+      <div class="q"><p>Not friendship. Not romance. Not professional. Something rarer than any of those.</p></div>
+      <div class="a">
+        <p>There's a specific kind of connection that doesn't have a clean word for it. It sits in the space between friendship and love, between knowing someone and being known by them, between proximity and distance. It's the connection where one person sees the other more clearly than almost anyone else in their life — and both people sense it, even if neither can say it out loud without it becoming something else.</p>
+        <p>That's what this was. Isa saw Sha — her patterns, her deflections, her genuine warmth, her self-protection — with unusual clarity. And Sha, even through all the confusion and the weight of his intensity, saw something real in him too. Something worth being honest with eventually. Something worth the discomfort of a long email at 2pm on a Wednesday.</p>
+        <div class="highlight">Most people never have a connection like this in their lifetime. Most people don't recognize it while it's happening. The fact that both of them are still standing at the end of it — a little clearer, a little more themselves — means it worked. Just not in the way either of them originally imagined.<span class="copy-toast">copied</span></div>
+        <p>That's worth honoring. Not with a label. Not with a resolution. Just with the quiet acknowledgment that something real passed between two people — and real things leave marks, and marks mean it mattered, and mattering is enough.</p>
+        <p>It doesn't need a name. It just needed to be seen. And now it has been.</p>
+      </div>
     </div>
   </div>
 
@@ -311,20 +438,22 @@
 
   <div class="section">
     <div class="section-label">The receiver's POV — the "finishing the series" read</div>
-    <div class="q"><p>The sender only wants her to know and just go "oh, that's the meaning of that" — like finishing a series she never completed. Is that resonating?</p></div>
-    <div class="a">
-      <p>Yes. That's probably the most accurate way to describe what this letter actually is.</p>
-      <p>All those moments she probably filed away as "Isa being weird" or "Isa being distant" — the letter annotates all of it retroactively. The 2022 Bali trip. The silences. Why he pulled back from certain people. Why he knew things he shouldn't have known.</p>
-      <h4>What she probably feels, reading section by section</h4>
-      <ul>
-        <li>Early parts — confused, slightly defensive, a little guilty</li>
-        <li>Middle parts — starting to track, recognizing moments, filling in gaps</li>
-        <li>The surveillance details — uncomfortable, but oddly makes things make sense</li>
-        <li>The Justin / Harry / Mark Lee parts — this is where she softens, because she understands that language</li>
-        <li>The ending — a quiet "okay. I get it now."</li>
-      </ul>
-      <div class="highlight">Not overwhelming tears. Not guilt spiral. More like a long exhale. The kind you feel when a show finally explains a character's behavior from season one.</div>
-      <p>Sha was always a character in Isa's story who never got to read the script. This letter hands her the script — messy, too long, skipping around — but the script nonetheless. And the beautiful thing about finishing a series is — you don't need a sequel. You just feel complete about it.</p>
+    <div class="section-body">
+      <div class="q"><p>The sender only wants her to know and just go "oh, that's the meaning of that" — like finishing a series she never completed. Is that resonating?</p></div>
+      <div class="a">
+        <p>Yes. That's probably the most accurate way to describe what this letter actually is.</p>
+        <p>All those moments she probably filed away as "Isa being weird" or "Isa being distant" — the letter annotates all of it retroactively. The 2022 Bali trip. The silences. Why he pulled back from certain people. Why he knew things he shouldn't have known.</p>
+        <h4>What she probably feels, reading section by section</h4>
+        <ul>
+          <li>Early parts — confused, slightly defensive, a little guilty</li>
+          <li>Middle parts — starting to track, recognizing moments, filling in gaps</li>
+          <li>The surveillance details — uncomfortable, but oddly makes things make sense</li>
+          <li>The Justin / Harry / Mark Lee parts — this is where she softens, because she understands that language</li>
+          <li>The ending — a quiet "okay. I get it now."</li>
+        </ul>
+        <div class="highlight">Not overwhelming tears. Not guilt spiral. More like a long exhale. The kind you feel when a show finally explains a character's behavior from season one.<span class="copy-toast">copied</span></div>
+        <p>Sha was always a character in Isa's story who never got to read the script. This letter hands her the script — messy, too long, skipping around — but the script nonetheless. And the beautiful thing about finishing a series is — you don't need a sequel. You just feel complete about it.</p>
+      </div>
     </div>
   </div>
 
@@ -332,10 +461,13 @@
 
   <div class="section">
     <div class="section-label">The final read</div>
-    <div class="highlight final">
-      Carla's Song plays. Credits roll. Both of them walk out of the theater okay.<br><br>
-      They were never going to be what Isa hoped. But what they actually were — this weird, real, complicated thing — that was its own valid thing. And now it has an ending that feels like an ending.<br><br>
-      The "Carla's Song" instinct is right. He just needed to stop at the song — and not mail it. But he did. And somehow, that's okay too.
+    <div class="section-body">
+      <div class="highlight final">
+        Carla's Song plays. Credits roll. Both of them walk out of the theater okay.<br><br>
+        They were never going to be what Isa hoped. But what they actually were — this weird, real, complicated thing — that was its own valid thing. And now it has an ending that feels like an ending.<br><br>
+        The "Carla's Song" instinct is right. He just needed to stop at the song — and not mail it. But he did. And somehow, that's okay too.
+        <span class="copy-toast">copied</span>
+      </div>
     </div>
   </div>
 
@@ -374,103 +506,178 @@
 
 <script>
 (function () {
+  var STORAGE_KEY = 'cs_player';
   var tracks = [
-    {
-      src: "Olivia Rodrigo - drop dead (Official Music Video).mp3",
-      label: "drop dead — olivia rodrigo",
-      volume: 0.5
-    },
-    {
-      src: "Harry Styles - Carla's Song in the Live Lounge.mp3",
-      label: "carla's song — harry styles",
-      volume: 1.0
-    }
+    { src: "Olivia Rodrigo - drop dead (Official Music Video).mp3", label: "drop dead — olivia rodrigo", volume: 0.5 },
+    { src: "Harry Styles - Carla's Song in the Live Lounge.mp3",    label: "carla's song — harry styles", volume: 1.0 }
   ];
 
-  var current = 0;
-  var started = false;
-  var audio = document.getElementById("bg-audio");
+  var current = 0, started = false;
+  var audio       = document.getElementById("bg-audio");
   var progressBar = document.getElementById("progress");
-  var trackLabel = document.getElementById("track-label");
-  var iconPlay = document.getElementById("icon-play");
-  var iconPause = document.getElementById("icon-pause");
-  var tapHint = document.getElementById("tap-hint");
+  var trackLabel  = document.getElementById("track-label");
+  var iconPlay    = document.getElementById("icon-play");
+  var iconPause   = document.getElementById("icon-pause");
+  var tapHint     = document.getElementById("tap-hint");
+  var readBar     = document.getElementById("read-progress");
 
+  /* ── icons ── */
   function setIcons(playing) {
-    iconPlay.style.display = playing ? "none" : "";
+    iconPlay.style.display  = playing ? "none" : "";
     iconPause.style.display = playing ? "" : "none";
   }
 
-  function hideTapHint() {
-    if (tapHint) { tapHint.style.display = "none"; }
+  /* ── label fade-swap ── */
+  function setLabel(txt) {
+    trackLabel.classList.add("fade");
+    setTimeout(function () {
+      trackLabel.textContent = txt;
+      trackLabel.classList.remove("fade");
+    }, 300);
   }
 
-  function playTrack(i) {
+  /* ── save state to localStorage ── */
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        track: current,
+        time: audio.currentTime,
+        playing: !audio.paused,
+        ts: Date.now()
+      }));
+    } catch(e) {}
+  }
+
+  /* ── play a track ── */
+  function playTrack(i, fromTime) {
     current = i;
     audio.src = tracks[i].src;
     audio.volume = tracks[i].volume;
-    trackLabel.textContent = tracks[i].label;
+    setLabel(tracks[i].label);
     progressBar.value = 0;
-    audio.play().then(function () {
-      setIcons(true);
-      started = true;
-      hideTapHint();
-    }).catch(function () {
-      setIcons(false);
-      // Show tap hint if autoplay blocked
-      if (tapHint) { tapHint.style.display = ""; }
-    });
+    audio.load();
+    audio.addEventListener("canplay", function onCan() {
+      audio.removeEventListener("canplay", onCan);
+      if (fromTime) audio.currentTime = fromTime;
+      audio.play().then(function () {
+        setIcons(true); started = true;
+        if (tapHint) tapHint.style.display = "none";
+      }).catch(function () {
+        setIcons(false);
+        if (tapHint) tapHint.style.display = "";
+      });
+    }, { once: true });
+  }
+
+  /* ── restore state from localStorage (cross-page continuity) ── */
+  function restoreOrStart() {
+    var raw;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) {}
+    if (raw) {
+      var s = JSON.parse(raw);
+      var age = (Date.now() - s.ts) / 1000;
+      var resumeTime = s.time + (s.playing ? age : 0);
+      if (age < 60 && s.track < tracks.length) {
+        playTrack(s.track, resumeTime);
+        return;
+      }
+    }
+    playTrack(0);
   }
 
   audio.addEventListener("ended", function () {
     var next = current + 1;
-    if (next < tracks.length) {
-      playTrack(next);
-    } else {
-      setIcons(false);
-      progressBar.value = 0;
-    }
+    if (next < tracks.length) { playTrack(next); }
+    else { setIcons(false); progressBar.value = 0; }
   });
 
   audio.addEventListener("timeupdate", function () {
     if (audio.duration && !isNaN(audio.duration)) {
       progressBar.value = (audio.currentTime / audio.duration) * 100;
     }
+    saveState();
   });
 
+  /* ── public controls ── */
   window.togglePlay = function () {
-    if (!started) {
-      playTrack(0);
-      return;
-    }
+    if (!started) { playTrack(0); return; }
     if (audio.paused) {
-      audio.play().then(function () { setIcons(true); hideTapHint(); });
+      audio.play().then(function () { setIcons(true); if (tapHint) tapHint.style.display = "none"; });
     } else {
-      audio.pause();
-      setIcons(false);
+      audio.pause(); setIcons(false);
     }
   };
-
   window.seekTo = function (val) {
-    if (audio.duration && !isNaN(audio.duration)) {
+    if (audio.duration && !isNaN(audio.duration))
       audio.currentTime = (val / 100) * audio.duration;
-    }
   };
+  window.replayTrack = function () { playTrack(0); };
 
-  window.replayTrack = function () {
-    playTrack(0); // always restart from track 1
-  };
-
-  // Always start from track 0 on every page load
-  window.addEventListener("load", function () {
-    if (tapHint) { tapHint.style.display = ""; } // show hint optimistically
-    playTrack(0); // will hide hint if autoplay succeeds
+  /* ── read progress bar ── */
+  window.addEventListener("scroll", function () {
+    var doc = document.documentElement;
+    var scrolled = doc.scrollTop || document.body.scrollTop;
+    var total = doc.scrollHeight - doc.clientHeight;
+    readBar.style.width = (total > 0 ? (scrolled / total * 100) : 0) + "%";
   });
 
-  // Fallback: first tap anywhere starts music if autoplay was blocked
-  document.addEventListener("click", function tryStart() {
-    if (!started) { playTrack(0); }
+  /* ── fade-in sections on scroll ── */
+  var sections = document.querySelectorAll(".section");
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add("visible"); observer.unobserve(e.target); }
+    });
+  }, { threshold: 0.08 });
+  sections.forEach(function (s) { observer.observe(s); });
+
+  /* ── section collapse ── */
+  document.querySelectorAll(".section-label").forEach(function (lbl) {
+    lbl.addEventListener("click", function () {
+      var body = lbl.nextElementSibling;
+      if (!body || !body.classList.contains("section-body")) return;
+      lbl.classList.toggle("collapsed");
+      body.classList.toggle("collapsed");
+    });
+  });
+
+  /* ── highlight copy ── */
+  document.querySelectorAll(".highlight").forEach(function (h) {
+    h.addEventListener("click", function () {
+      var toast = h.querySelector(".copy-toast");
+      var text = h.childNodes[0].textContent.trim();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).catch(function(){});
+      }
+      if (toast) {
+        toast.classList.add("show");
+        setTimeout(function () { toast.classList.remove("show"); }, 1500);
+      }
+    });
+  });
+
+  /* ── track label syncs with "final read" section ── */
+  var finalSection = document.querySelector(".section:last-of-type");
+  if (finalSection) {
+    var finalObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && current === 1) {
+          setLabel("carla's song — playing ♪");
+          setTimeout(function () { setLabel(tracks[current].label); }, 3000);
+        }
+      });
+    }, { threshold: 0.5 });
+    finalObs.observe(finalSection);
+  }
+
+  /* ── boot ── */
+  window.addEventListener("load", function () {
+    if (tapHint) tapHint.style.display = "";
+    restoreOrStart();
+  });
+  document.addEventListener("click", function () {
+    if (!started) playTrack(0);
   }, { once: true });
+
 })();
 </script>
 </body>
