@@ -56,6 +56,15 @@
       transition: opacity 0.2s;
     }
     .replay-btn:hover { opacity: 1; }
+    #tap-hint {
+      font-size: 11px; color: #b4b2a9;
+      animation: pulse 1.8s ease-in-out infinite;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
 
     /* ── PAGE ── */
     .page { max-width: 680px; margin: 0 auto; padding: 3rem 1.5rem; }
@@ -353,6 +362,7 @@
     <div id="track-label">drop dead — olivia rodrigo</div>
     <input id="progress" type="range" value="0" min="0" max="100" step="0.1" oninput="seekTo(this.value)">
   </div>
+  <span id="tap-hint" style="display:none">tap anywhere ♪</span>
   <button class="replay-btn" onclick="replayTrack()" title="Replay from start">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
       <path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" fill="#b4b2a9"/>
@@ -384,10 +394,15 @@
   var trackLabel = document.getElementById("track-label");
   var iconPlay = document.getElementById("icon-play");
   var iconPause = document.getElementById("icon-pause");
+  var tapHint = document.getElementById("tap-hint");
 
   function setIcons(playing) {
     iconPlay.style.display = playing ? "none" : "";
     iconPause.style.display = playing ? "" : "none";
+  }
+
+  function hideTapHint() {
+    if (tapHint) { tapHint.style.display = "none"; }
   }
 
   function playTrack(i) {
@@ -399,8 +414,11 @@
     audio.play().then(function () {
       setIcons(true);
       started = true;
+      hideTapHint();
     }).catch(function () {
       setIcons(false);
+      // Show tap hint if autoplay blocked
+      if (tapHint) { tapHint.style.display = ""; }
     });
   }
 
@@ -426,7 +444,7 @@
       return;
     }
     if (audio.paused) {
-      audio.play().then(function () { setIcons(true); });
+      audio.play().then(function () { setIcons(true); hideTapHint(); });
     } else {
       audio.pause();
       setIcons(false);
@@ -440,19 +458,18 @@
   };
 
   window.replayTrack = function () {
-    audio.currentTime = 0;
-    audio.play().then(function () { setIcons(true); started = true; });
+    playTrack(0); // always restart from track 1
   };
 
-  // Try autoplay on load, fall back to first click
+  // Always start from track 0 on every page load
   window.addEventListener("load", function () {
-    playTrack(0);
+    if (tapHint) { tapHint.style.display = ""; } // show hint optimistically
+    playTrack(0); // will hide hint if autoplay succeeds
   });
 
+  // Fallback: first tap anywhere starts music if autoplay was blocked
   document.addEventListener("click", function tryStart() {
-    if (!started || audio.paused) {
-      playTrack(current);
-    }
+    if (!started) { playTrack(0); }
   }, { once: true });
 })();
 </script>
