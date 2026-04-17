@@ -492,11 +492,14 @@
   }
 
   window.showSong = function(i) {
-    showLyricsFor(i);
-    // seek audio to this track too
-    if (i !== current) {
-      playTrack(i, 0);
-    }
+    document.querySelectorAll(".lyrics-block").forEach(function(b,j){
+      b.classList.toggle("active", j === i);
+    });
+    document.querySelectorAll(".song-tab").forEach(function(t,j){
+      t.classList.toggle("active", j === i);
+    });
+    document.getElementById("song-meta").textContent = songMetas[i];
+    syncLyrics(audio.currentTime);
   };
 
   /* ── click a lyric line to seek ── */
