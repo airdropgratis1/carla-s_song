@@ -415,7 +415,7 @@
     "Harry Styles · Carla's Song · Live Lounge · 2026"
   ];
 
-  var current = 0, started = false;
+  var current = 0, started = false, gestureReady = false;
   var audio       = document.getElementById("bg-audio");
   var progressBar = document.getElementById("progress");
   var trackLabel  = document.getElementById("track-label");
@@ -424,11 +424,14 @@
   var tapHint     = document.getElementById("tap-hint");
   var readBar     = document.getElementById("read-progress");
 
-  function setIcons(p) { iconPlay.style.display = p?"none":""; iconPause.style.display = p?"":"none"; }
+  function setIcons(p) {
+    iconPlay.style.display  = p ? "none" : "";
+    iconPause.style.display = p ? "" : "none";
+  }
 
   function setLabel(txt) {
     trackLabel.classList.add("fade");
-    setTimeout(function(){ trackLabel.textContent = txt; trackLabel.classList.remove("fade"); }, 300);
+    setTimeout(function () { trackLabel.textContent = txt; trackLabel.classList.remove("fade"); }, 300);
   }
 
   function saveState() {
@@ -437,99 +440,103 @@
         track: current, time: audio.currentTime,
         playing: !audio.paused, ts: Date.now()
       }));
-    } catch(e){}
+    } catch(e) {}
   }
 
-  /* ── lyrics sync ── */
+  /* ── lyrics sync — only updates the currently visible block ── */
   var allLines = [
     document.querySelectorAll("#lyrics-0 .lyric-line"),
     document.querySelectorAll("#lyrics-1 .lyric-line")
   ];
-  var lastActive = [null, null];
+  var lastActiveIdx = [-1, -1];
 
   function syncLyrics(t) {
     var lines = allLines[current];
-    if (!lines || lines.length === 0) return;
+    if (!lines || !lines.length) return;
     var activeIdx = -1;
     for (var i = lines.length - 1; i >= 0; i--) {
       if (t >= parseFloat(lines[i].dataset.t)) { activeIdx = i; break; }
     }
-    if (lastActive[current] !== null && lastActive[current] !== activeIdx) {
-      var prev = lines[lastActive[current]];
-      if (prev) { prev.classList.remove("active"); prev.classList.add("past"); }
+    if (activeIdx === lastActiveIdx[current]) return; // nothing changed
+    // unmark old
+    if (lastActiveIdx[current] >= 0) {
+      lines[lastActiveIdx[current]].classList.remove("active");
+      lines[lastActiveIdx[current]].classList.add("past");
     }
+    // mark new
     if (activeIdx >= 0) {
-      var line = lines[activeIdx];
-      if (!line.classList.contains("active")) {
-        line.classList.add("active");
-        line.classList.remove("past");
-        // auto-scroll to active line
-        line.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-      lastActive[current] = activeIdx;
+      lines[activeIdx].classList.remove("past");
+      lines[activeIdx].classList.add("active");
+      lines[activeIdx].scrollIntoView({ behavior: "smooth", block: "center" });
     }
-    // mark all before as past
+    // mark everything before as past
     for (var j = 0; j < activeIdx; j++) {
       lines[j].classList.remove("active");
       lines[j].classList.add("past");
     }
+    lastActiveIdx[current] = activeIdx;
   }
 
-  /* ── switch which lyrics panel shows ── */
-  function showLyricsFor(trackIdx) {
-    document.querySelectorAll(".lyrics-block").forEach(function(b,i){
-      b.classList.toggle("active", i === trackIdx);
-    });
-    document.querySelectorAll(".song-tab").forEach(function(t,i){
-      t.classList.toggle("active", i === trackIdx);
-    });
-    document.getElementById("song-meta").textContent = songMetas[trackIdx];
-    // reset lines
-    document.querySelectorAll(".lyric-line").forEach(function(l){
-      l.classList.remove("active","past");
-    });
-    lastActive = [null, null];
-  }
-
-  window.showSong = function(i) {
-    document.querySelectorAll(".lyrics-block").forEach(function(b,j){
+  /* ── show lyrics panel — VISUAL ONLY, never touches audio ── */
+  window.showSong = function (i) {
+    document.querySelectorAll(".lyrics-block").forEach(function (b, j) {
       b.classList.toggle("active", j === i);
     });
-    document.querySelectorAll(".song-tab").forEach(function(t,j){
+    document.querySelectorAll(".song-tab").forEach(function (t, j) {
       t.classList.toggle("active", j === i);
     });
     document.getElementById("song-meta").textContent = songMetas[i];
-    syncLyrics(audio.currentTime);
+    // re-sync whichever panel is now visible without touching audio
+    syncLyricsForPanel(i, audio.currentTime);
   };
 
-  /* ── click a lyric line to seek ── */
-  document.querySelectorAll(".lyric-line").forEach(function(line, _, arr) {
+  function syncLyricsForPanel(panelIdx, t) {
+    var lines = allLines[panelIdx];
+    if (!lines || !lines.length) return;
+    lines.forEach(function(l) { l.classList.remove("active", "past"); });
+    var activeIdx = -1;
+    for (var i = lines.length - 1; i >= 0; i--) {
+      if (t >= parseFloat(lines[i].dataset.t)) { activeIdx = i; break; }
+    }
+    for (var j = 0; j <= activeIdx; j++) {
+      lines[j].classList.add(j === activeIdx ? "active" : "past");
+    }
+    lastActiveIdx[panelIdx] = activeIdx;
+    if (activeIdx >= 0) lines[activeIdx].scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  /* ── tap a lyric line to seek ── */
+  document.querySelectorAll(".lyric-line").forEach(function (line) {
     line.style.cursor = "pointer";
-    line.addEventListener("click", function() {
+    line.addEventListener("click", function () {
       var t = parseFloat(line.dataset.t);
       if (!isNaN(t) && audio.duration) {
         audio.currentTime = t;
-        if (audio.paused) audio.play().then(function(){ setIcons(true); started=true; });
+        if (audio.paused) audio.play().then(function () { setIcons(true); started = true; });
       }
     });
   });
 
-  /* ── play track ── */
+  /* ── load and play a track ── */
   function playTrack(i, fromTime) {
     current = i;
     audio.src = tracks[i].src;
     audio.volume = tracks[i].volume;
     setLabel(tracks[i].label);
     progressBar.value = 0;
-    showLyricsFor(i);
+    // update tabs + meta silently
+    document.querySelectorAll(".song-tab").forEach(function (t, j) {
+      t.classList.toggle("active", j === i);
+    });
+    document.getElementById("song-meta").textContent = songMetas[i];
     audio.load();
     audio.addEventListener("canplay", function onCan() {
       audio.removeEventListener("canplay", onCan);
       if (fromTime != null) audio.currentTime = fromTime;
-      audio.play().then(function(){
+      audio.play().then(function () {
         setIcons(true); started = true;
         if (tapHint) tapHint.style.display = "none";
-      }).catch(function(){
+      }).catch(function () {
         setIcons(false);
         if (tapHint) tapHint.style.display = "";
       });
@@ -537,27 +544,33 @@
   }
 
   /* ── restore from localStorage ── */
-  function restoreOrStart() {
-    var raw; try { raw = localStorage.getItem(STORAGE_KEY); } catch(e){}
+  function restoreState() {
+    var raw; try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) {}
     if (raw) {
-      var s = JSON.parse(raw);
-      var age = (Date.now() - s.ts) / 1000;
-      var resumeTime = s.time + (s.playing ? age : 0);
-      if (age < 60 && s.track < tracks.length) {
-        playTrack(s.track, resumeTime);
-        return;
-      }
+      try {
+        var s = JSON.parse(raw);
+        var age = (Date.now() - s.ts) / 1000;
+        if (age < 60 && s.track < tracks.length) {
+          var resumeTime = s.time + (s.playing ? age : 0);
+          playTrack(s.track, resumeTime);
+          return;
+        }
+      } catch(e) {}
     }
-    playTrack(0);
+    // prepare audio src without playing yet — wait for gesture
+    current = 0;
+    audio.src = tracks[0].src;
+    audio.volume = tracks[0].volume;
+    audio.load();
   }
 
-  audio.addEventListener("ended", function(){
+  audio.addEventListener("ended", function () {
     var next = current + 1;
     if (next < tracks.length) playTrack(next);
     else { setIcons(false); progressBar.value = 0; }
   });
 
-  audio.addEventListener("timeupdate", function(){
+  audio.addEventListener("timeupdate", function () {
     if (audio.duration && !isNaN(audio.duration)) {
       progressBar.value = (audio.currentTime / audio.duration) * 100;
       syncLyrics(audio.currentTime);
@@ -565,40 +578,58 @@
     saveState();
   });
 
-  window.togglePlay = function(){
-    if (!started) { playTrack(0); return; }
-    if (audio.paused) { audio.play().then(function(){ setIcons(true); if(tapHint) tapHint.style.display="none"; }); }
+  window.togglePlay = function () {
+    if (!started) { doPlay(); return; }
+    if (audio.paused) { audio.play().then(function () { setIcons(true); }); }
     else { audio.pause(); setIcons(false); }
   };
-  window.seekTo = function(val){
-    if (audio.duration && !isNaN(audio.duration)) audio.currentTime = (val/100)*audio.duration;
+  window.seekTo = function (val) {
+    if (audio.duration && !isNaN(audio.duration)) audio.currentTime = (val / 100) * audio.duration;
   };
-  window.replayTrack = function(){ playTrack(0); };
+  window.replayTrack = function () { playTrack(0); };
+
+  /* ── actually start playing — must be called from gesture ── */
+  function doPlay() {
+    if (started) return;
+    audio.play().then(function () {
+      setIcons(true); started = true;
+      if (tapHint) tapHint.style.display = "none";
+    }).catch(function () {
+      setIcons(false);
+      if (tapHint) tapHint.style.display = "";
+    });
+  }
+
+  /* ── gesture unlock — touchstart is the ONLY reliable mobile trigger ── */
+  function onGesture() {
+    if (gestureReady) return;
+    gestureReady = true;
+    doPlay();
+  }
+  document.addEventListener("touchstart", onGesture, { passive: true });
+  document.addEventListener("click",      onGesture);
 
   /* ── read progress bar ── */
-  window.addEventListener("scroll", function(){
+  window.addEventListener("scroll", function () {
     var doc = document.documentElement;
     var s = doc.scrollTop || document.body.scrollTop;
     var t = doc.scrollHeight - doc.clientHeight;
-    readBar.style.width = (t > 0 ? s/t*100 : 0) + "%";
+    readBar.style.width = (t > 0 ? (s / t * 100) : 0) + "%";
   });
 
   /* ── fade-in sections ── */
-  var obs = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("visible"); obs.unobserve(e.target); } });
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add("visible"); obs.unobserve(e.target); }
+    });
   }, { threshold: 0.08 });
-  document.querySelectorAll(".lyric-section").forEach(function(s){ obs.observe(s); });
+  document.querySelectorAll(".lyric-section").forEach(function (s) { obs.observe(s); });
 
   /* ── boot ── */
-  window.addEventListener("load", function(){
+  window.addEventListener("load", function () {
     if (tapHint) tapHint.style.display = "";
-    restoreOrStart();
+    restoreState();
   });
-  function tryAutoStart() { if (!started) { playTrack(current); } }
-  document.addEventListener("click",      tryAutoStart, { once: true });
-  document.addEventListener("touchstart", tryAutoStart, { once: true, passive: true });
-  document.addEventListener("touchmove",  tryAutoStart, { once: true, passive: true });
-  window.addEventListener("scroll",       tryAutoStart, { once: true });
 
 })();
 </script>
