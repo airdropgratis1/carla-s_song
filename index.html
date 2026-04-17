@@ -674,9 +674,11 @@
     if (tapHint) tapHint.style.display = "";
     restoreOrStart();
   });
-  document.addEventListener("click", function () {
-    if (!started) playTrack(0);
-  }, { once: true });
+  function tryAutoStart() { if (!started) playTrack(0); }
+  document.addEventListener("click",      tryAutoStart, { once: true });
+  document.addEventListener("touchstart", tryAutoStart, { once: true, passive: true });
+  document.addEventListener("touchmove",  tryAutoStart, { once: true, passive: true });
+  window.addEventListener("scroll",       tryAutoStart, { once: true });
 
 })();
 </script>
