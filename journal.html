@@ -603,7 +603,23 @@
 
     if (crossPage) {
       var resumeTime = s.time + (s.playing ? (Date.now()-s.ts)/1000 : 0);
-      play(s.track, resumeTime);
+      current = s.track;
+      trackLabel.textContent = tracks[s.track].label;
+      audio.volume = muted ? 0 : (volSlider.value/100 * tracks[s.track].volume * 2);
+      audio.src = tracks[s.track].src;
+      audio.addEventListener("canplay", function onCan(){
+        audio.removeEventListener("canplay", onCan);
+        if (resumeTime > 0) audio.currentTime = resumeTime;
+      }, { once: true });
+      audio.load();
+      if(tapHint) tapHint.style.display="";
+      function resumeOnGesture(){
+        document.removeEventListener("touchstart", resumeOnGesture);
+        document.removeEventListener("click", resumeOnGesture);
+        audio.play().then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; }).catch(function(){});
+      }
+      document.addEventListener("touchstart", resumeOnGesture, { passive:true });
+      document.addEventListener("click", resumeOnGesture);
     } else {
       audio.src = tracks[0].src;
       audio.volume = tracks[0].volume;
