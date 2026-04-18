@@ -470,17 +470,21 @@
 
   function playTrack(i, fromTime) {
     current = i;
-    audio.src = tracks[i].src;
     audio.volume = muted ? 0 : (volSlider.value/100 * tracks[i].volume * 2);
     setLabel(tracks[i].label);
     progressBar.value = 0;
-    audio.load();
-    audio.addEventListener("canplay", function onCan(){
-      audio.removeEventListener("canplay", onCan);
-      if (fromTime != null) audio.currentTime = fromTime;
+    audio.src = tracks[i].src;
+    var doPlayTrack = function() {
+      if (fromTime != null && fromTime > 0) audio.currentTime = fromTime;
       audio.play().then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; })
            .catch(function(){ setIcons(false); if(tapHint) tapHint.style.display=""; });
-    }, { once: true });
+    };
+    if (audio.readyState >= 3) {
+      doPlayTrack();
+    } else {
+      audio.addEventListener("canplay", doPlayTrack, { once: true });
+      audio.load();
+    }
   }
 
   function restoreOrStart() {
