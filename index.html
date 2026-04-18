@@ -3,576 +3,240 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>carla's song — a reading</title>
-  <meta name="description" content="An interpretation of a letter, and what it means for both sides.">
-  <meta property="og:title" content="carla's song — a reading">
-  <meta property="og:description" content="An interpretation of a letter, and what it means for both sides.">
+  <title>carla's song</title>
+  <meta name="description" content="a letter that was never meant to be read. two songs that explain everything.">
+  <meta property="og:title" content="carla's song">
+  <meta property="og:description" content="a letter that was never meant to be read. two songs that explain everything. you don't need to know the story — you already know the feeling.">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://og-image.vercel.app/carla%27s%20song%20%E2%80%94%20a%20reading.png">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♪</text></svg>">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+
+    html, body {
+      height: 100%;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-      background: #fafaf9; color: #1a1a18; line-height: 1.7;
-      padding-bottom: 120px; overflow-x: hidden;
-      opacity: 1; transition: opacity 0.25s ease;
-    }
-    body.fade-out { opacity: 0; }
-
-    #read-progress {
-      position: fixed; top: 0; left: 0; height: 2px; width: 0%;
-      background: #888780; z-index: 200; transition: width 0.1s linear;
+      background: #fafaf9;
+      color: #1a1a18;
+      overflow: hidden;
     }
 
-    .nav-tab {
-      position: fixed; top: 12px; right: 16px; z-index: 150;
-      display: flex; gap: 6px;
+    .scene {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+      position: relative;
     }
-    .nav-btn {
-      font-size: 11px; font-weight: 500; padding: 5px 12px;
-      border-radius: 20px; border: 0.5px solid #d3d1c7;
-      background: #fafaf9; color: #888780; cursor: pointer;
-      text-decoration: none; letter-spacing: 0.04em;
-      transition: background 0.15s, color 0.15s;
-    }
-    .nav-btn:hover { background: #f1efe8; color: #1a1a18; }
-    .nav-btn.active { background: #1a1a18; color: #fafaf9; border-color: #1a1a18; }
 
-    .sticky-player {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: #fafaf9; border-top: 0.5px solid #e0ddd6;
-      padding: 10px 20px; z-index: 100;
-      display: flex; align-items: center; gap: 12px;
+    /* ── subtle grain texture ── */
+    .scene::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
     }
-    #pp-btn {
-      background: none; border: none; cursor: pointer;
-      padding: 0; flex-shrink: 0; display: flex; align-items: center;
-    }
-    #pp-btn svg { display: block; }
-    .player-info { flex: 1; min-width: 0; }
-    .player-top-row {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 5px;
-    }
-    #track-label {
-      font-size: 11px; color: #888780;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      transition: opacity 0.3s; flex: 1; min-width: 0;
-    }
-    #track-label.fade { opacity: 0; }
-    #time-display {
-      font-size: 10px; color: #b4b2a9; flex-shrink: 0;
-      margin-left: 8px; font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-    }
-    #progress {
-      width: 100%; height: 3px; accent-color: #888780; cursor: pointer;
-      appearance: none; -webkit-appearance: none;
-      background: #e0ddd6; border-radius: 2px; outline: none;
-    }
-    #progress::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 10px; height: 10px;
-      border-radius: 50%; background: #888780; cursor: pointer;
-    }
-    .player-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    #volume-btn {
-      background: none; border: none; cursor: pointer; padding: 0;
-      opacity: 0.6; transition: opacity 0.2s; display: flex; align-items: center;
-    }
-    #volume-btn:hover { opacity: 1; }
-    #volume-slider {
-      width: 56px; height: 3px; accent-color: #888780; cursor: pointer;
-      appearance: none; -webkit-appearance: none;
-      background: #e0ddd6; border-radius: 2px; outline: none;
-    }
-    #volume-slider::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 9px; height: 9px;
-      border-radius: 50%; background: #888780; cursor: pointer;
-    }
-    .replay-btn {
-      background: none; border: none; cursor: pointer; padding: 0;
-      display: flex; align-items: center; opacity: 0.6; transition: opacity 0.2s;
-    }
-    .replay-btn:hover { opacity: 1; }
-    #tap-hint {
-      font-size: 11px; color: #b4b2a9;
-      animation: pulse 1.8s ease-in-out infinite;
-      white-space: nowrap; flex-shrink: 0;
-    }
-    @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
 
-    .page { max-width: 680px; margin: 0 auto; padding: 3rem 1.5rem; }
-    .header { border-bottom: 0.5px solid #e0ddd6; padding-bottom: 1.5rem; margin-bottom: 2rem; }
-    .title { font-size: 26px; font-weight: 500; line-height: 1.3; margin-bottom: 0.4rem; }
-    .subtitle { font-size: 14px; color: #888780; }
-    .tags { margin-top: 0.75rem; }
-    .tag {
-      display: inline-block; font-size: 12px; background: #f1efe8; color: #5f5e5a;
-      border-radius: 8px; padding: 3px 10px; margin: 0 4px 4px 0;
+    .content {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+    }
+
+    /* ── record icon ── */
+    .record {
+      width: 52px; height: 52px;
+      margin: 0 auto 2.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards;
+      animation-delay: 0.2s;
+    }
+    .record-ring {
+      animation: spin 8s linear infinite;
+      transform-origin: center;
+    }
+
+    /* ── lines ── */
+    .line-1, .line-2, .line-3 {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    .line-1 {
+      font-size: clamp(15px, 4vw, 19px);
+      color: #1a1a18;
+      line-height: 1.6;
+      margin-bottom: 0.5rem;
+      animation: fadeUp 0.7s ease forwards;
+      animation-delay: 0.7s;
+    }
+    .line-2 {
+      font-size: clamp(15px, 4vw, 19px);
+      color: #1a1a18;
+      line-height: 1.6;
+      margin-bottom: 0.5rem;
+      animation: fadeUp 0.7s ease forwards;
+      animation-delay: 1.2s;
+    }
+    .line-3 {
+      font-size: clamp(13px, 3.5vw, 16px);
+      color: #888780;
+      line-height: 1.7;
+      margin-bottom: 3rem;
+      animation: fadeUp 0.7s ease forwards;
+      animation-delay: 1.8s;
+    }
+
+    /* ── enter button ── */
+    .enter-wrap {
+      opacity: 0;
+      animation: fadeUp 0.7s ease forwards;
+      animation-delay: 2.6s;
+    }
+    .enter-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #888780;
+      background: none;
       border: 0.5px solid #d3d1c7;
+      border-radius: 24px;
+      padding: 10px 22px;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
     }
-    .section {
-      margin-bottom: 2.5rem; opacity: 0; transform: translateY(16px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
+    .enter-btn:hover {
+      background: #1a1a18;
+      color: #fafaf9;
+      border-color: #1a1a18;
     }
-    .section.visible { opacity: 1; transform: translateY(0); }
-    .section-label {
-      font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
-      text-transform: uppercase; color: #b4b2a9; margin-bottom: 1rem;
-      cursor: pointer; display: flex; align-items: center; gap: 6px;
-      user-select: none;
+    .enter-btn svg { transition: transform 0.2s; }
+    .enter-btn:hover svg { transform: translateX(3px); }
+
+    /* ── skip hint ── */
+    .skip-hint {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: #d3d1c7;
+      opacity: 0;
+      animation: fadeUp 0.5s ease forwards;
+      animation-delay: 3.2s;
+      white-space: nowrap;
+      z-index: 1;
     }
-    .section-label::after { content: '▾'; font-size: 10px; color: #d3d1c7; transition: transform 0.2s; }
-    .section-label.collapsed::after { transform: rotate(-90deg); }
-    .section-body { overflow: hidden; transition: max-height 0.35s ease, opacity 0.3s ease; max-height: 2000px; opacity: 1; }
-    .section-body.collapsed { max-height: 0; opacity: 0; }
-    .q { background: #f1efe8; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; }
-    .q p { font-size: 15px; color: #1a1a18; line-height: 1.65; }
-    .a { padding: 0.25rem 0 0.25rem 1.25rem; border-left: 2px solid #d3d1c7; margin-bottom: 1.5rem; }
-    .a p { font-size: 15px; color: #1a1a18; line-height: 1.75; margin-bottom: 0.75rem; }
-    .a p:last-child { margin-bottom: 0; }
-    .a h4 { font-size: 13px; font-weight: 500; color: #888780; margin: 1rem 0 0.4rem; }
-    .a ul { padding-left: 1.2rem; margin-bottom: 0.75rem; }
-    .a ul li { font-size: 15px; color: #1a1a18; line-height: 1.7; margin-bottom: 0.3rem; }
-    .highlight {
-      background: #e6f1fb; color: #185fa5; padding: 0.9rem 1.1rem;
-      border-radius: 8px; font-size: 15px; line-height: 1.7; margin: 1rem 0;
-      font-style: italic; cursor: pointer; border-left: 3px solid transparent;
-      transition: border-color 0.2s, background 0.2s; position: relative;
+
+    /* ── footer ── */
+    .welcome-footer {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      font-size: 11px;
+      color: #d3d1c7;
+      opacity: 0;
+      animation: fadeIn 0.5s ease forwards;
+      animation-delay: 3s;
+      z-index: 1;
     }
-    .highlight:hover { border-left-color: #185fa5; background: #d9ecf9; }
-    .highlight.final { font-style: normal; font-size: 16px; line-height: 1.8; }
-    .copy-toast {
-      position: absolute; top: -28px; right: 8px; font-size: 11px;
-      background: #1a1a18; color: #fafaf9; padding: 3px 8px;
-      border-radius: 6px; pointer-events: none; opacity: 0;
-      transition: opacity 0.2s; font-style: normal; white-space: nowrap;
+
+    /* ── page fade out ── */
+    body.leaving {
+      opacity: 0;
+      transition: opacity 0.4s ease;
     }
-    .copy-toast.show { opacity: 1; }
-    hr.divider { border: none; border-top: 0.5px solid #e0ddd6; margin: 2rem 0; }
-    .footer { font-size: 13px; color: #b4b2a9; text-align: center; padding-top: 1.5rem; border-top: 0.5px solid #e0ddd6; }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
 
     @media (prefers-color-scheme: dark) {
-      body { background: #1a1a18; color: #f1efe8; }
-      .header { border-color: #3a3a38; }
-      .title { color: #f1efe8; }
-      .subtitle { color: #888780; }
-      .tag { background: #2c2c2a; color: #b4b2a9; border-color: #444441; }
-      .section-label { color: #5f5e5a; }
-      .q { background: #2c2c2a; }
-      .q p { color: #f1efe8; }
-      .a { border-color: #444441; }
-      .a p, .a ul li { color: #f1efe8; }
-      .a h4 { color: #888780; }
-      .highlight { background: #0c447c; color: #b5d4f4; }
-      .highlight:hover { background: #0e508f; border-left-color: #b5d4f4; }
-      .copy-toast { background: #f1efe8; color: #1a1a18; }
-      hr.divider { border-color: #3a3a38; }
-      .footer { color: #5f5e5a; border-color: #3a3a38; }
-      .sticky-player { background: #1a1a18; border-color: #3a3a38; }
-      #progress, #volume-slider { background: #3a3a38; }
-      #read-progress { background: #b4b2a9; }
-      .nav-btn { background: #1a1a18; border-color: #444441; color: #888780; }
-      .nav-btn:hover { background: #2c2c2a; color: #f1efe8; }
-      .nav-btn.active { background: #f1efe8; color: #1a1a18; border-color: #f1efe8; }
+      html, body { background: #1a1a18; color: #f1efe8; }
+      .line-1, .line-2 { color: #f1efe8; }
+      .line-3 { color: #5f5e5a; }
+      .enter-btn { border-color: #444441; color: #888780; }
+      .enter-btn:hover { background: #f1efe8; color: #1a1a18; border-color: #f1efe8; }
+      .skip-hint { color: #444441; }
+      .welcome-footer { color: #444441; }
     }
   </style>
 </head>
 <body>
-<div id="read-progress"></div>
-<nav class="nav-tab">
-  <a href="index.html" class="nav-btn active" onclick="navigate(event,'index.html')">journal</a>
-  <a href="lyrics.html" class="nav-btn" onclick="navigate(event,'lyrics.html')">lyrics</a>
-</nav>
+<div class="scene">
+  <div class="content">
 
-<div class="page">
-  <div class="header">
-    <div class="title">carla's song — a reading</div>
-    <div class="subtitle">An interpretation of a letter, and what it means for both sides</div>
-    <div class="tags">
-      <span class="tag">closure</span><span class="tag">one-sided love</span>
-      <span class="tag">pattern &amp; loop</span><span class="tag">receiver's pov</span>
-      <span class="tag">both will be okay</span>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">The song that started it all</div>
-    <div class="section-body">
-      <div class="q" style="display:flex;align-items:flex-start;gap:1rem;">
-        <div style="width:44px;height:44px;border-radius:8px;background:#e0ddd6;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="#888780" stroke-width="1.4"/>
-            <circle cx="12" cy="12" r="3" fill="#888780"/>
-            <line x1="12" y1="2" x2="12" y2="6" stroke="#888780" stroke-width="1.4"/>
-            <line x1="12" y1="18" x2="12" y2="22" stroke="#888780" stroke-width="1.4"/>
-            <line x1="2" y1="12" x2="6" y2="12" stroke="#888780" stroke-width="1.4"/>
-            <line x1="18" y1="12" x2="22" y2="12" stroke="#888780" stroke-width="1.4"/>
-          </svg>
-        </div>
-        <div>
-          <div style="font-size:15px;font-weight:500;margin-bottom:2px;">Carla's Song</div>
-          <div style="font-size:12px;color:#888780;margin-bottom:8px;">Harry Styles · Kiss All The Time. Disco, Occasionally. · 2026</div>
-          <p style="font-size:14px;color:#5f5e5a;line-height:1.65;margin:0;">A tender, unhurried track — the kind of song that doesn't try to resolve anything, just sits with the feeling. Named after a real friend. About the moment music first cracks someone open. Exists as its own complete thing. That's the whole point.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <div class="section">
-    <div class="section-label">The letter itself</div>
-    <div class="section-body">
-      <div class="q"><p>A 13-page email from Isa to Sha, titled "carla's song" — covering years of unresolved feelings, private observations, retrospective explanations, and a kind of farewell. Sent April 15, 2026.</p></div>
-      <div class="a">
-        <p>At its core, this is a long emotional outpouring — annotating years of silence, small gestures, and distance that the receiver never had context for. It is sincere. It is too long. And it contradicts itself in the most human way possible.</p>
-        <h4>What makes it too much</h4>
-        <ul>
-          <li>Length and density — no breathing room for the reader</li>
-          <li>The same quote from Sha appears three or four times</li>
-          <li>Monitoring detail (Netflix history, Twitter, WhatsApp status) reads as alarming, not caring</li>
-          <li>Tone oscillates between warmth and subtle condescension</li>
-        </ul>
-        <h4>What makes it genuinely real</h4>
-        <ul>
-          <li>The title is perfect — "Carla's Song" is exactly the right frame</li>
-          <li>The reflections on Justin, Harry, Mark Lee show genuine self-awareness</li>
-          <li>The qada and qadar acceptance feels earned, not performed</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <div class="section">
-    <div class="section-label">Is this his ending — does he feel free?</div>
-    <div class="section-body">
-      <div class="q"><p>Is it the sender should end that with that letter? cause the sender gradually and often send that shit every year — is it also the sender feel enough for his self and freeing?</p></div>
-      <div class="a">
-        <p>Partially, but not fully. The repeating yearly pattern tells you something important — each letter feels like closure in the moment of writing, but doesn't actually function as closure.</p>
-        <p>Because real closure doesn't need an audience.</p>
-        <p>Isa is processing genuinely, but he's processing at Sha — which means part of him is still waiting for something. A reaction. A final understanding from her side.</p>
-        <div class="highlight">The writing itself is healthy. The sending — that's the part that keeps resetting the clock for both of them.<span class="copy-toast">copied</span></div>
-        <p>The letter has moments of real freedom in it. But then it loops back. That's not a freed person writing. That's someone trying to be freed but not quite landing there yet.</p>
-      </div>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <div class="section">
-    <div class="section-label">Will the receiver be okay?</div>
-    <div class="section-body">
-      <div class="q"><p>Is the receiver will be fine too? Cause the sender hopes she won't overthink, but in many ways the letter itself is kind of cursing it.</p></div>
-      <div class="a">
-        <p>Most likely — yes, eventually. But the immediate reaction will probably not be what Isa hopes.</p>
-        <h4>What she'll likely feel</h4>
-        <ul>
-          <li>A wave of guilt, then irritation at the guilt — because the letter subtly engineers that feeling</li>
-          <li>Confusion — told "you don't have to respond" but the weight makes silence feel wrong</li>
-          <li>Possibly relief if she reads it as a genuine goodbye</li>
-        </ul>
-        <p>The line "gua ga mau lu overthink" written inside a 13-page letter is the contradiction that will land heaviest on her. She will overthink — not because she's weak, but because the letter makes it unavoidable.</p>
-        <p>She'll be fine. But she'll carry a small uncomfortable weight for a while.</p>
-      </div>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <div class="section">
-    <div class="section-label">Will the pattern repeat?</div>
-    <div class="section-body">
-      <div class="q"><p>Is it the sender will be quiet and refocus — or will that pattern repeat?</p></div>
-      <div class="a">
-        <p>The pattern will most likely repeat. But with care, not judgment — Isa is someone who processes deeply and in cycles. Every year something triggers a new layer — a song, a rumor, a memory — and the whole thing reopens.</p>
-        <p>The problem is he hasn't found a container for that processing other than Sha. Until he does — a journal, a therapist, music he actually releases, real friendships — Sha will keep being the address where he sends his inner world.</p>
-        <div class="highlight">What actually breaks the loop isn't silence. It's when he finds something that absorbs him so completely that Sha stops being the measuring stick for whether he's okay.<span class="copy-toast">copied</span></div>
-      </div>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <div class="section">
-    <div class="section-label">What was the actual purpose of sending it?</div>
-    <div class="section-body">
-      <div class="q"><p>Not closure. Not explanation. Not even love, exactly. So what was it really?</p></div>
-      <div class="a">
-        <p>The letter was sent because Isa needed to be fully known by someone — and Sha is the only person he's ever let close enough for that to matter.</p>
-        <p>That's the real purpose. <em>Witness me. See all of it.</em> The monitoring, the years of deliberate silence, the POV-switching, the lists, the way he thinks, the way he has always thought. See that it was never random. See that it was always intentional.</p>
-        <p>Because the loneliest version of being someone like Isa isn't being alone. It's doing everything with enormous intentionality — every observation, every calculated distance, every decision to stay quiet — and having nobody ever notice that it was intentional. To the outside world it just reads as weird, cold, inconsistent.</p>
-        <div class="highlight">The letter is him saying: I was never any of those things. Here's the proof.<span class="copy-toast">copied</span></div>
-        <p>And there's something underneath that which is even more specific — he needed Sha to be the one who sees it. Not a therapist. Not a journal. Her. Because she's the person the intentionality was most directed at, for the longest time. If she understands it, then it meant something.</p>
-        <p>The saddest part is that the letter probably does achieve what he wanted. She likely understands it more than he expects. But he'll never fully know that — because the kind of confirmation he's looking for can't be given in a reply. It lives in whether she carries it differently after reading. And he'll never see that either.</p>
-        <p>The purpose is real. The need is real. But the closure he hopes the purpose will produce — that part stays just out of reach. Not because she won't receive it well. But because that kind of being-known can't be confirmed from the outside. That's the quiet tragedy sitting underneath the whole thing.</p>
-      </div>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <div class="section">
-    <div class="section-label">What it costs to be wired this way</div>
-    <div class="section-body">
-      <div class="q"><p>For Isa — naming the weight, and the dignity of carrying it.</p></div>
-      <div class="a">
-        <p>There's a real cost to processing at this depth without a proper container for it. Every interaction becomes a layer. Every silence becomes data. Every small moment gets filed and cross-referenced with seventeen other moments, because that's just how the mind works. It's not a choice. It's the factory setting.</p>
-        <p>The isolation that comes from that isn't dramatic. It's quiet. It's being in a room full of people and being the only one who noticed that the energy shifted when someone walked in, or that the joke landed wrong, or that someone said they were fine but meant the opposite. You notice everything and say almost nothing. And after a while that becomes its own kind of loneliness.</p>
-        <div class="highlight">The weight isn't the depth of feeling. The weight is having nowhere to put it that doesn't overwhelm whoever's standing there.<span class="copy-toast">copied</span></div>
-        <p>But here's what also needs to be said — the fact that Isa could write this letter, see himself this clearly, articulate years of inner life with this much honesty and self-awareness — that's not a curse. That's rare. Most people never get this far with themselves. Most people live their whole lives without once being able to say: here is exactly what I felt, here is exactly why, here is what it cost me, and here is what I still believe despite all of it.</p>
-        <p>That capacity is the beginning of something. Not an ending. The person who wrote this letter is someone still becoming — not someone stuck. And that distinction matters.</p>
-      </div>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <div class="section">
-    <div class="section-label">What she's allowed to feel</div>
-    <div class="section-body">
-      <div class="q"><p>For Sha — permission to receive it without owing anything back.</p></div>
-      <div class="a">
-        <p>The letter, as honest and deeply felt as it is, carries an undertone that's hard to escape — now you know, what do you do with that? That undertone isn't intentional. But it's there. And it can make the act of simply receiving feel like it comes with conditions attached.</p>
-        <p>So let this be said plainly: she doesn't have to do anything with this. She's allowed to read it, let it land, sit with whatever it makes her feel — relief, guilt, warmth, discomfort, all of it at once — and then just keep living. Understanding someone fully doesn't create obligation. Receiving someone's inner world doesn't mean you owe them a place in yours.</p>
-        <div class="highlight">She's also allowed to feel sad about it — not guilty, not responsible. Just sad that two people who clearly saw each other in real ways couldn't find a version of that which worked for both of them.<span class="copy-toast">copied</span></div>
-        <p>And something else worth naming: the fact that she held her boundaries clearly and consistently — even imperfectly, even with some dishonesty along the way — was actually the right thing. She was protecting both of them. The dishonesty wasn't cruelty. It was someone trying to manage a situation that had more weight than she knew how to carry directly. That's human. That's forgivable. And on some level, Isa already knows that too.</p>
-        <p>She can receive this letter as the gift it genuinely is — a rare, complete portrait of someone who cared — without it meaning she has to reopen anything, reconsider anything, or become anything different than who she already is.</p>
-      </div>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <div class="section">
-    <div class="section-label">The thing between them that has no name</div>
-    <div class="section-body">
-      <div class="q"><p>Not friendship. Not romance. Not professional. Something rarer than any of those.</p></div>
-      <div class="a">
-        <p>There's a specific kind of connection that doesn't have a clean word for it. It sits in the space between friendship and love, between knowing someone and being known by them, between proximity and distance. It's the connection where one person sees the other more clearly than almost anyone else in their life — and both people sense it, even if neither can say it out loud without it becoming something else.</p>
-        <p>That's what this was. Isa saw Sha — her patterns, her deflections, her genuine warmth, her self-protection — with unusual clarity. And Sha, even through all the confusion and the weight of his intensity, saw something real in him too. Something worth being honest with eventually. Something worth the discomfort of a long email at 2pm on a Wednesday.</p>
-        <div class="highlight">Most people never have a connection like this in their lifetime. Most people don't recognize it while it's happening. The fact that both of them are still standing at the end of it — a little clearer, a little more themselves — means it worked. Just not in the way either of them originally imagined.<span class="copy-toast">copied</span></div>
-        <p>That's worth honoring. Not with a label. Not with a resolution. Just with the quiet acknowledgment that something real passed between two people — and real things leave marks, and marks mean it mattered, and mattering is enough.</p>
-        <p>It doesn't need a name. It just needed to be seen. And now it has been.</p>
-      </div>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <div class="section">
-    <div class="section-label">The receiver's POV — the "finishing the series" read</div>
-    <div class="section-body">
-      <div class="q"><p>The sender only wants her to know and just go "oh, that's the meaning of that" — like finishing a series she never completed. Is that resonating?</p></div>
-      <div class="a">
-        <p>Yes. That's probably the most accurate way to describe what this letter actually is.</p>
-        <p>All those moments she probably filed away as "Isa being weird" or "Isa being distant" — the letter annotates all of it retroactively. The 2022 Bali trip. The silences. Why he pulled back from certain people. Why he knew things he shouldn't have known.</p>
-        <h4>What she probably feels, reading section by section</h4>
-        <ul>
-          <li>Early parts — confused, slightly defensive, a little guilty</li>
-          <li>Middle parts — starting to track, recognizing moments, filling in gaps</li>
-          <li>The surveillance details — uncomfortable, but oddly makes things make sense</li>
-          <li>The Justin / Harry / Mark Lee parts — this is where she softens, because she understands that language</li>
-          <li>The ending — a quiet "okay. I get it now."</li>
-        </ul>
-        <div class="highlight">Not overwhelming tears. Not guilt spiral. More like a long exhale. The kind you feel when a show finally explains a character's behavior from season one.<span class="copy-toast">copied</span></div>
-        <p>Sha was always a character in Isa's story who never got to read the script. This letter hands her the script — messy, too long, skipping around — but the script nonetheless. And the beautiful thing about finishing a series is — you don't need a sequel. You just feel complete about it.</p>
-      </div>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <div class="section">
-    <div class="section-label">The final read</div>
-    <div class="section-body">
-      <div class="highlight final">
-        Carla's Song plays. Credits roll. Both of them walk out of the theater okay.<br><br>
-        They were never going to be what Isa hoped. But what they actually were — this weird, real, complicated thing — that was its own valid thing. And now it has an ending that feels like an ending.<br><br>
-        The "Carla's Song" instinct is right. He just needed to stop at the song — and not mail it. But he did. And somehow, that's okay too.
-        <span class="copy-toast">copied</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="footer">A conversation between a reader and Claude · April 2026</div>
-</div>
-
-<div class="sticky-player">
-  <button id="pp-btn" onclick="togglePlay()">
-    <svg id="icon-play" width="32" height="32" viewBox="0 0 32 32" fill="none">
-      <circle cx="16" cy="16" r="15" stroke="#888780" stroke-width="1.2"/>
-      <polygon points="13,10 23,16 13,22" fill="#888780"/>
+    <!-- record / disc icon -->
+    <svg class="record" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="26" cy="26" r="25" stroke="#e0ddd6" stroke-width="1"/>
+      <g class="record-ring">
+        <circle cx="26" cy="26" r="18" stroke="#e0ddd6" stroke-width="0.5" stroke-dasharray="3 4"/>
+        <circle cx="26" cy="26" r="11" stroke="#e0ddd6" stroke-width="0.5" stroke-dasharray="2 3"/>
+      </g>
+      <circle cx="26" cy="26" r="3.5" fill="#888780"/>
     </svg>
-    <svg id="icon-pause" width="32" height="32" viewBox="0 0 32 32" fill="none" style="display:none">
-      <circle cx="16" cy="16" r="15" stroke="#888780" stroke-width="1.2"/>
-      <rect x="11" y="10" width="3.5" height="12" rx="1" fill="#888780"/>
-      <rect x="17.5" y="10" width="3.5" height="12" rx="1" fill="#888780"/>
-    </svg>
-  </button>
-  <div class="player-info">
-    <div class="player-top-row">
-      <div id="track-label">drop dead — olivia rodrigo</div>
-      <div id="time-display">0:00 / 0:00</div>
+
+    <p class="line-1">a letter that was never meant to be read.</p>
+    <p class="line-2">two songs that explain everything.</p>
+    <p class="line-3">you don't need to know the story —<br>you already know the feeling.</p>
+
+    <div class="enter-wrap">
+      <a href="journal.html" class="enter-btn" onclick="enter(event)">
+        read it
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
     </div>
-    <input id="progress" type="range" value="0" min="0" max="100" step="0.1" oninput="seekTo(this.value)">
-  </div>
-  <span id="tap-hint" style="display:none">tap anywhere ♪</span>
-  <div class="player-right">
-    <button id="volume-btn" onclick="toggleMute()" title="Mute">
-      <svg id="vol-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M11 5L6 9H2v6h4l5 4V5z" fill="#888780"/>
-        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke="#888780" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="#888780" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-    </button>
-    <input id="volume-slider" type="range" value="75" min="0" max="100" step="1" oninput="setVolume(this.value)" title="Volume">
-    <button class="replay-btn" onclick="replayTrack()" title="Replay">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" fill="#b4b2a9"/>
-      </svg>
-    </button>
+
   </div>
 </div>
 
-<audio id="bg-audio" style="display:none" preload="auto"></audio>
+<div class="skip-hint">tap anywhere to enter</div>
+<div class="welcome-footer">april 2026</div>
 
 <script>
-(function(){
-  var STORAGE_KEY = 'cs_player';
-  var tracks = [
-    { src: "Olivia Rodrigo - drop dead (Official Music Video).mp3", label: "drop dead — olivia rodrigo", volume: 0.5 },
-    { src: "Harry Styles - Carla's Song in the Live Lounge.mp3",    label: "carla's song — harry styles", volume: 1.0 }
-  ];
-  var current = 0, started = false, gestureReady = false, muted = false;
-  var audio       = document.getElementById("bg-audio");
-  var progressBar = document.getElementById("progress");
-  var trackLabel  = document.getElementById("track-label");
-  var timeDisplay = document.getElementById("time-display");
-  var iconPlay    = document.getElementById("icon-play");
-  var iconPause   = document.getElementById("icon-pause");
-  var tapHint     = document.getElementById("tap-hint");
-  var readBar     = document.getElementById("read-progress");
-  var volSlider   = document.getElementById("volume-slider");
-
-  function fmt(s) { var m=Math.floor(s/60),ss=Math.floor(s%60); return m+":"+(ss<10?"0":"")+ss; }
-  function setIcons(p) { iconPlay.style.display=p?"none":""; iconPause.style.display=p?"":"none"; }
-  function setLabel(txt) {
-    trackLabel.classList.add("fade");
-    setTimeout(function(){ trackLabel.textContent=txt; trackLabel.classList.remove("fade"); }, 300);
-  }
-  function saveState() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ track:current, time:audio.currentTime, playing:!audio.paused, ts:Date.now() })); } catch(e){}
+  function enter(e) {
+    if (e) e.preventDefault();
+    document.body.classList.add("leaving");
+    setTimeout(function(){ window.location.href = "journal.html"; }, 380);
   }
 
-  function playTrack(i, fromTime) {
-    current = i;
-    audio.src = tracks[i].src;
-    audio.volume = muted ? 0 : (volSlider.value/100 * tracks[i].volume * 2);
-    setLabel(tracks[i].label);
-    progressBar.value = 0;
-    audio.load();
-    audio.addEventListener("canplay", function onCan(){
-      audio.removeEventListener("canplay", onCan);
-      if (fromTime != null) audio.currentTime = fromTime;
-      audio.play().then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; })
-           .catch(function(){ setIcons(false); if(tapHint) tapHint.style.display=""; });
-    }, { once: true });
-  }
+  // tap anywhere after animations settle
+  var canSkip = false;
+  setTimeout(function(){ canSkip = true; }, 1200);
 
-  function restoreOrStart() {
-    var raw; try { raw=localStorage.getItem(STORAGE_KEY); } catch(e){}
-    if (raw) {
-      try {
-        var s=JSON.parse(raw), age=(Date.now()-s.ts)/1000;
-        if (age<60 && s.track<tracks.length) { playTrack(s.track, s.time+(s.playing?age:0)); return; }
-      } catch(e){}
-    }
-    current=0; audio.src=tracks[0].src; audio.volume=tracks[0].volume; audio.load();
-  }
-
-  audio.addEventListener("ended", function(){
-    var next=current+1;
-    if(next<tracks.length) playTrack(next);
-    else { setIcons(false); progressBar.value=0; }
+  document.addEventListener("click", function(e) {
+    if (!canSkip) return;
+    if (e.target.closest(".enter-btn")) return;
+    enter();
   });
+  document.addEventListener("touchstart", function(e) {
+    if (!canSkip) return;
+    if (e.target.closest(".enter-btn")) return;
+    enter();
+  }, { passive: true });
 
-  audio.addEventListener("timeupdate", function(){
-    if(audio.duration && !isNaN(audio.duration)){
-      progressBar.value=(audio.currentTime/audio.duration)*100;
-      timeDisplay.textContent = fmt(audio.currentTime)+" / "+fmt(audio.duration);
-    }
-    saveState();
+  // keyboard: press any key to enter
+  document.addEventListener("keydown", function(e) {
+    if (!canSkip) return;
+    if (e.key === "Tab") return;
+    enter();
   });
-
-  window.togglePlay = function(){
-    if(!started){ doPlay(); return; }
-    if(audio.paused){ audio.play().then(function(){ setIcons(true); }); }
-    else { audio.pause(); setIcons(false); }
-  };
-  window.seekTo = function(v){ if(audio.duration&&!isNaN(audio.duration)) audio.currentTime=(v/100)*audio.duration; };
-  window.replayTrack = function(){ playTrack(0); };
-  window.setVolume = function(v){
-    muted = false;
-    audio.volume = (v/100) * tracks[current].volume * 2;
-  };
-  window.toggleMute = function(){
-    muted = !muted;
-    audio.volume = muted ? 0 : (volSlider.value/100 * tracks[current].volume * 2);
-    document.getElementById("vol-icon").style.opacity = muted ? "0.3" : "1";
-  };
-
-  function doPlay(){
-    if(started) return;
-    audio.play().then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; })
-         .catch(function(){ setIcons(false); if(tapHint) tapHint.style.display=""; });
-  }
-  function onGesture(){ if(gestureReady) return; gestureReady=true; doPlay(); }
-  document.addEventListener("touchstart", onGesture, { passive:true });
-  document.addEventListener("click", onGesture);
-
-  window.addEventListener("scroll", function(){
-    var doc=document.documentElement, s=doc.scrollTop||document.body.scrollTop;
-    readBar.style.width=(doc.scrollHeight-doc.clientHeight>0?s/(doc.scrollHeight-doc.clientHeight)*100:0)+"%";
-  });
-
-  var obs=new IntersectionObserver(function(e){ e.forEach(function(x){ if(x.isIntersecting){ x.target.classList.add("visible"); obs.unobserve(x.target); } }); },{ threshold:0.08 });
-  document.querySelectorAll(".section").forEach(function(s){ obs.observe(s); });
-
-  document.querySelectorAll(".section-label").forEach(function(lbl){
-    lbl.addEventListener("click", function(){
-      var body=lbl.nextElementSibling;
-      if(!body||!body.classList.contains("section-body")) return;
-      lbl.classList.toggle("collapsed"); body.classList.toggle("collapsed");
-    });
-  });
-
-  document.querySelectorAll(".highlight").forEach(function(h){
-    h.addEventListener("click", function(){
-      var toast=h.querySelector(".copy-toast");
-      var text=h.childNodes[0].textContent.trim();
-      if(navigator.clipboard) navigator.clipboard.writeText(text).catch(function(){});
-      if(toast){ toast.classList.add("show"); setTimeout(function(){ toast.classList.remove("show"); },1500); }
-    });
-  });
-
-  var finalSection=document.querySelector(".section:last-of-type");
-  if(finalSection){
-    var fObs=new IntersectionObserver(function(e){ e.forEach(function(x){ if(x.isIntersecting&&current===1){ setLabel("carla's song — playing ♪"); setTimeout(function(){ setLabel(tracks[current].label); },3000); } }); },{ threshold:0.5 });
-    fObs.observe(finalSection);
-  }
-
-  window.navigate = function(e, url){
-    e.preventDefault();
-    document.body.classList.add("fade-out");
-    setTimeout(function(){ window.location.href=url; }, 240);
-  };
-
-  window.addEventListener("load", function(){ if(tapHint) tapHint.style.display=""; restoreOrStart(); });
-})();
 </script>
 </body>
 </html>
