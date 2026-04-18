@@ -420,14 +420,18 @@
     var next = current + 1;
     if (next < tracks.length) {
       current = next;
-      trackLabel.textContent = tracks[next].label;
+      trackLabel.textContent = tracks[current].label;
       progressBar.value = 0;
-      switchPanel(next);
-      audio.volume = muted ? 0 : (volSlider.value/100 * tracks[next].volume * 2);
-      audio.src = tracks[next].src;
-      audio.play()
-        .then(function(){ setIcons(true); })
-        .catch(function(){ setIcons(false); });
+      switchPanel(current);
+      audio.volume = muted ? 0 : (volSlider.value/100 * tracks[current].volume * 2);
+      audio.src = tracks[current].src;
+      audio.load();
+      audio.addEventListener("canplay", function onCan(){
+        audio.removeEventListener("canplay", onCan);
+        audio.play()
+          .then(function(){ setIcons(true); started=true; })
+          .catch(function(){ setIcons(false); });
+      }, { once: true });
     } else {
       setIcons(false); progressBar.value = 0;
     }
