@@ -475,6 +475,7 @@
     progressBar.value = 0;
     audio.src = tracks[i].src;
     audio.volume = muted ? 0 : (volSlider.value/100 * tracks[i].volume * 2);
+    audio.load();
     if (andPlay) {
       audio.addEventListener("canplay", function onCan(){
         audio.removeEventListener("canplay", onCan);
@@ -484,7 +485,6 @@
           .catch(function(){ setIcons(false); if(tapHint) tapHint.style.display=""; });
       }, { once: true });
     }
-    audio.load();
   }
 
   /* ── auto-advance when track ends ── */
@@ -576,27 +576,30 @@
   /* ── boot ── */
   window.addEventListener("load", function(){
     var fromWelcome = window.location.search.indexOf("autoplay=1") !== -1;
+    if (fromWelcome) {
+      // fresh entry from welcome — always start from track 0
+      try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+      gestureReady = true;
+      if(tapHint) tapHint.style.display="none";
+      loadTrack(0, 0, true);
+      return;
+    }
+    // check for resume state
     var raw; try{ raw=localStorage.getItem(STORAGE_KEY); }catch(e){}
-    var resumeTrack=0, resumeTime=0;
     if (raw) {
       try {
         var s=JSON.parse(raw), age=(Date.now()-s.ts)/1000;
-        if (age<60 && s.track<tracks.length) {
-          resumeTrack = s.track;
-          resumeTime = s.time + (s.playing ? age : 0);
+        if (age<60 && s.track<tracks.length && s.time>0) {
+          gestureReady=true;
+          if(tapHint) tapHint.style.display="none";
+          loadTrack(s.track, s.time+(s.playing?age:0), true);
+          return;
         }
       } catch(e){}
     }
-    if (fromWelcome || resumeTime > 0) {
-      // play immediately — welcome tap counts as gesture, or resuming
-      gestureReady = true;
-      if(tapHint) tapHint.style.display="none";
-      loadTrack(resumeTrack, resumeTime, true);
-    } else {
-      // wait for first gesture
-      if(tapHint) tapHint.style.display="";
-      loadTrack(0, 0, false);
-    }
+    // default — wait for gesture
+    if(tapHint) tapHint.style.display="";
+    loadTrack(0, 0, false);
   });
 })();
 </script>
