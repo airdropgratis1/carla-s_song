@@ -483,9 +483,29 @@
     var s=null;
     try { var r=localStorage.getItem(STORAGE_KEY); if(r) s=JSON.parse(r); } catch(e){}
     var crossPage = s && (Date.now()-s.ts)<4000 && s.track<tracks.length;
+
     if (crossPage) {
       var resumeTime = s.time + (s.playing ? (Date.now()-s.ts)/1000 : 0);
-      play(s.track, resumeTime);
+      // set up state without trying to autoplay — browser will block it
+      current = s.track;
+      trackLabel.textContent = tracks[s.track].label;
+      switchPanel(s.track);
+      audio.volume = muted ? 0 : (volSlider.value/100 * tracks[s.track].volume * 2);
+      audio.src = tracks[s.track].src;
+      audio.addEventListener("canplay", function onCan(){
+        audio.removeEventListener("canplay", onCan);
+        if (resumeTime > 0) audio.currentTime = resumeTime;
+      }, { once: true });
+      audio.load();
+      if(tapHint) tapHint.style.display="";
+      // first tap/click resumes
+      function resumeOnGesture(){
+        document.removeEventListener("touchstart", resumeOnGesture);
+        document.removeEventListener("click", resumeOnGesture);
+        audio.play().then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; }).catch(function(){});
+      }
+      document.addEventListener("touchstart", resumeOnGesture, { passive:true });
+      document.addEventListener("click", resumeOnGesture);
     } else {
       audio.src = tracks[0].src;
       audio.volume = tracks[0].volume;
