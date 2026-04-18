@@ -16,7 +16,8 @@
       overflow-x: hidden;
       opacity: 1; transition: opacity 0.25s ease;
     }
-    body.fade-out { opacity: 0; }
+    body.fade-out { opacity: 0;
+    }
 
     /* ── READ PROGRESS BAR ── */
     #read-progress {
@@ -91,13 +92,6 @@
       transition: opacity 0.2s;
     }
     .replay-btn:hover { opacity: 1; }
-    .nav-track-btn {
-      background: none; border: none; cursor: pointer;
-      padding: 0 2px; flex-shrink: 0;
-      display: flex; align-items: center; opacity: 0.6;
-      transition: opacity 0.2s;
-    }
-    .nav-track-btn:hover { opacity: 1; }
     #tap-hint {
       font-size: 11px; color: #b4b2a9;
       animation: pulse 1.8s ease-in-out infinite;
@@ -133,7 +127,7 @@
 
     /* ── LYRICS BLOCK ── */
     .lyrics-block { display: none; }
-    .lyrics-block.active { display: block; padding: 0 0.5rem; }
+    .lyrics-block.active { display: block; }
 
     .lyric-section {
       margin-bottom: 2rem;
@@ -142,33 +136,36 @@
     }
     .lyric-section.visible { opacity: 1; transform: translateY(0); }
 
+    .lyric-section-label {
+      font-size: 10px; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: #d3d1c7; margin-bottom: 0.75rem;
+    }
+
     .lyric-line {
       font-size: 18px;
       line-height: 1.85;
       color: #c8c6be;
       cursor: default;
-      transition: color 0.3s, transform 0.3s;
+      transition: color 0.25s, transform 0.2s;
       display: block;
       padding: 1px 0;
       border-radius: 4px;
     }
     .lyric-line.active {
       color: #1a1a18;
+      transform: scale(1.015);
       animation: lyric-pulse 1.8s ease-in-out infinite;
     }
-    /* song 0 = coral/pink, song 1 = teal */
     body.song-0 .lyric-line.active { color: #993556; }
     body.song-1 .lyric-line.active { color: #0F6E56; }
     body.song-0 .lyric-section-label::before { background: #ED93B1; }
     body.song-1 .lyric-section-label::before { background: #5DCAA5; }
-
     .lyric-line.past { color: #888780; }
     @keyframes lyric-pulse {
-      0%, 100% { font-size: 18px; }
-      50%       { font-size: 18.4px; }
+      0%, 100% { transform: scale(1.015); }
+      50%       { transform: scale(1.022); }
     }
-
-    /* ── section label dots ── */
     .lyric-section-label {
       font-size: 10px; font-weight: 500;
       letter-spacing: 0.1em; text-transform: uppercase;
@@ -176,47 +173,34 @@
       display: flex; align-items: center; gap: 6px;
     }
     .lyric-section-label::before {
-      content: '';
-      display: inline-block;
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: #d3d1c7;
-      flex-shrink: 0;
-      transition: background 0.4s;
+      content: ''; display: inline-block;
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #d3d1c7; flex-shrink: 0; transition: background 0.4s;
     }
-
-    /* ── note particles ── */
-    .note-particle {
-      position: fixed;
-      font-size: 16px;
-      color: #888780;
-      pointer-events: none;
-      z-index: 999;
-      animation: note-float 0.9s ease-out forwards;
-    }
-    @keyframes note-float {
-      0%   { opacity: 1; transform: translateY(0) scale(1); }
-      100% { opacity: 0; transform: translateY(-60px) scale(0.6); }
-    }
-
-    /* ── waveform bars ── */
     .wave-bars {
       display: inline-flex; align-items: flex-end; gap: 2px;
       height: 12px; margin-left: 6px; vertical-align: middle;
     }
-    .wave-bars span {
-      display: block; width: 2px; background: #888780; border-radius: 1px;
-      transform-origin: bottom;
-    }
+    .wave-bars span { display: block; width: 2px; background: #888780; border-radius: 1px; }
     .wave-bars.playing span:nth-child(1) { animation: bar 0.9s ease-in-out infinite; }
     .wave-bars.playing span:nth-child(2) { animation: bar 0.9s ease-in-out 0.2s infinite; }
     .wave-bars.playing span:nth-child(3) { animation: bar 0.9s ease-in-out 0.4s infinite; }
     .wave-bars.playing span:nth-child(4) { animation: bar 0.9s ease-in-out 0.1s infinite; }
-    @keyframes bar {
-      0%, 100% { height: 3px; }
-      50%       { height: 12px; }
-    }
+    @keyframes bar { 0%,100%{height:3px} 50%{height:12px} }
     .wave-bars:not(.playing) span { height: 4px; }
+    .note-particle {
+      position: fixed; font-size: 16px; color: #888780;
+      pointer-events: none; z-index: 999;
+      animation: note-float 0.9s ease-out forwards;
+    }
+    @keyframes note-float { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-60px)} }
+    .nav-track-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 0 2px; flex-shrink: 0;
+      display: flex; align-items: center; opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    .nav-track-btn:hover { opacity: 1; }
 
     /* ── NO LYRICS NOTICE ── */
     .no-lyrics {
@@ -280,79 +264,7 @@
   </div>
 
   <!-- ── SONG 0: DROP DEAD ── -->
-  <div class="lyrics-block active" id="lyrics-0" style="display:block">
-    <div class="lyric-section">
-      <div class="lyric-section-label">verse 1</div>
-      <span class="lyric-line" data-t="16.1">I know that the bar closes at 11</span>
-      <span class="lyric-line" data-t="23.6">But I hope you never finish that beer</span>
-      <span class="lyric-line" data-t="31.2">You know all the words to "Just Like Heaven"</span>
-      <span class="lyric-line" data-t="36.6">And I know why he wrote them</span>
-      <span class="lyric-line" data-t="39.4">Now that you're standin' right here</span>
-    </div>
-    <div class="lyric-section">
-      <div class="lyric-section-label">chorus</div>
-      <span class="lyric-line" data-t="45.1">Oh, one night I was bored in bed</span>
-      <span class="lyric-line" data-t="49.4">And stalked you on the internet</span>
-      <span class="lyric-line" data-t="52.9">It's feminine intuition</span>
-      <span class="lyric-line" data-t="56.5">'Cause I always had a vision of us standing like this</span>
-      <span class="lyric-line" data-t="60.3">All pressed up in the bathroom line</span>
-      <span class="lyric-line" data-t="63.9">You lookin' like an angel on the walls of Versailles</span>
-      <span class="lyric-line" data-t="67.7">The most alive I've ever been</span>
-      <span class="lyric-line" data-t="71.2">But kiss me and I might drop dead</span>
-    </div>
-    <div class="lyric-section">
-      <div class="lyric-section-label">verse 2</div>
-      <span class="lyric-line" data-t="82.8">And I feel like I might throw up</span>
-      <span class="lyric-line" data-t="84.5">Left hook, right punch to the gut</span>
-      <span class="lyric-line" data-t="86.4">You're so, so pretty, boy</span>
-      <span class="lyric-line" data-t="88">I'm paranoid I made you up</span>
-      <span class="lyric-line" data-t="90.2">Yeah, I'd love it if you walked me home</span>
-      <span class="lyric-line" data-t="92">If you promised, we can go real slow</span>
-      <span class="lyric-line" data-t="93.8">'Cause I got chewing gum and a bunch of stuff I'd like to know</span>
-      <span class="lyric-line" data-t="97.3">Like, have you ever been to Japan?</span>
-      <span class="lyric-line" data-t="99.3">Or taken that Eurostar to France?</span>
-      <span class="lyric-line" data-t="101.3">I've been droppin' hints all night that I'd love it if you held my hand, goddamn</span>
-      <span class="lyric-line" data-t="105">And then maybe we could make-makeout</span>
-      <span class="lyric-line" data-t="106.8">Clothes off and fall to the ground</span>
-      <span class="lyric-line" data-t="108.4">Let's go steady, let's go out</span>
-      <span class="lyric-line" data-t="110">And tell the whole damn world how</span>
-    </div>
-    <div class="lyric-section">
-      <div class="lyric-section-label">chorus</div>
-      <span class="lyric-line" data-t="112.2">One night I was bored in bed</span>
-      <span class="lyric-line" data-t="115.4">And stalked you on the internet</span>
-      <span class="lyric-line" data-t="118.9">It's feminine intuition</span>
-      <span class="lyric-line" data-t="122.7">'Cause I always had a vision of us standing like this</span>
-      <span class="lyric-line" data-t="126.3">All pressed up in the bathroom line</span>
-      <span class="lyric-line" data-t="130">You lookin' like an angel on the walls of Versailles</span>
-      <span class="lyric-line" data-t="133.8">The most alive I've ever been</span>
-      <span class="lyric-line" data-t="137.1">But kiss me and I might</span>
-    </div>
-    <div class="lyric-section">
-      <div class="lyric-section-label">bridge</div>
-      <span class="lyric-line" data-t="141.7">Pisces and a Gemini</span>
-      <span class="lyric-line" data-t="144.7">But I think we might go really nice together</span>
-      <span class="lyric-line" data-t="148.7">If you let me stay the night</span>
-      <span class="lyric-line" data-t="152">Well, I think I might just have to stay forever</span>
-      <span class="lyric-line" data-t="156.3">Pisces and a Gemini</span>
-      <span class="lyric-line" data-t="159.5">But I think we might go really nice together</span>
-      <span class="lyric-line" data-t="163.5">If you let me stay the night</span>
-      <span class="lyric-line" data-t="166.9">Well, I think I might just have to stay forever</span>
-    </div>
-    <div class="lyric-section">
-      <div class="lyric-section-label">chorus</div>
-      <span class="lyric-line" data-t="185">Oh, one night I was bored in bed</span>
-      <span class="lyric-line" data-t="189.1">And stalked you on the internet</span>
-      <span class="lyric-line" data-t="192.7">It's feminine intuition</span>
-      <span class="lyric-line" data-t="196.3">'Cause I always had a vision of us standing like this</span>
-      <span class="lyric-line" data-t="200">All pressed up in the bathroom line</span>
-      <span class="lyric-line" data-t="203.7">You lookin' like an angel on the walls of Versailles</span>
-      <span class="lyric-line" data-t="207.7">The most alive I've ever been</span>
-      <span class="lyric-line" data-t="211">But kiss me and I might</span>
-      <span class="lyric-line" data-t="215.4">Kiss me and I might</span>
-      <span class="lyric-line" data-t="219.1">Kiss me and I might drop dead</span>
-    </div>
-  </div>
+  <div class="lyrics-block active" id="lyrics-0">
     <div class="lyric-section">
       <div class="lyric-section-label">verse 1</div>
       <span class="lyric-line" data-t="16.1">I know that the bar closes at 11</span>
@@ -427,7 +339,7 @@
   </div>
 
   <!-- ── SONG 1: CARLA'S SONG ── -->
-  <div class="lyrics-block" id="lyrics-1" style="display:none">
+  <div class="lyrics-block" id="lyrics-1">
     <div class="lyric-section">
       <div class="lyric-section-label">verse 1</div>
       <span class="lyric-line" data-t="17.5">There is a bridge that leads to troubled waters</span>
@@ -576,10 +488,9 @@
   var trackLabel  = document.getElementById("track-label");
   var iconPlay    = document.getElementById("icon-play");
   var iconPause   = document.getElementById("icon-pause");
+  var waveBars    = document.getElementById("wave-bars");
   var tapHint     = document.getElementById("tap-hint");
   var readBar     = document.getElementById("read-progress");
-
-  var waveBars = document.getElementById("wave-bars");
 
   function setIcons(p) {
     iconPlay.style.display  = p ? "none" : "";
@@ -589,12 +500,7 @@
 
   function setLabel(txt) {
     trackLabel.classList.add("fade");
-    setTimeout(function () {
-      // keep wave bars inside label
-      trackLabel.innerHTML = txt + '<span class="wave-bars' + (audio.paused ? '' : ' playing') + '" id="wave-bars"><span></span><span></span><span></span><span></span></span>';
-      waveBars = document.getElementById("wave-bars");
-      trackLabel.classList.remove("fade");
-    }, 300);
+    setTimeout(function () { trackLabel.textContent = txt; trackLabel.classList.remove("fade"); }, 300);
   }
 
   function saveState() {
@@ -641,47 +547,43 @@
   }
 
   /* ── show lyrics panel — VISUAL ONLY, never touches audio ── */
-  /* ── note particle burst ── */
-  function spawnNotes() {
-    var notes = ["♪", "♫", "♩", "♬"];
-    var cx = window.innerWidth / 2;
-    var cy = window.innerHeight - 80;
-    for (var n = 0; n < 5; n++) {
-      (function(idx) {
-        setTimeout(function() {
-          var el = document.createElement("span");
-          el.className = "note-particle";
-          el.textContent = notes[idx % notes.length];
-          el.style.left = (cx + (Math.random() - 0.5) * 160) + "px";
-          el.style.top = (cy - Math.random() * 30) + "px";
-          document.body.appendChild(el);
-          setTimeout(function(){ el.remove(); }, 950);
-        }, idx * 100);
-      })(n);
-    }
-  }
-
   function setSongClass(i) {
     document.body.classList.remove("song-0", "song-1");
     document.body.classList.add("song-" + i);
   }
 
+  function spawnNotes() {
+    var notes = ["♪","♫","♩","♬"];
+    var cx = window.innerWidth/2, cy = window.innerHeight-80;
+    for (var n=0;n<5;n++) { (function(idx){
+      setTimeout(function(){
+        var el=document.createElement("span");
+        el.className="note-particle";
+        el.textContent=notes[idx%notes.length];
+        el.style.left=(cx+(Math.random()-0.5)*160)+"px";
+        el.style.top=(cy-Math.random()*30)+"px";
+        document.body.appendChild(el);
+        setTimeout(function(){ el.remove(); },950);
+      },idx*100);
+    })(n); }
+  }
+
   window.showSong = function (i) {
-    var switched = i !== current;
-    document.getElementById("lyrics-0").style.display = (i === 0) ? "block" : "none";
-    document.getElementById("lyrics-1").style.display = (i === 1) ? "block" : "none";
+    var switched = (i !== current);
+    document.querySelectorAll(".lyrics-block").forEach(function (b, j) {
+      b.classList.toggle("active", j === i);
+    });
     document.querySelectorAll(".song-tab").forEach(function (t, j) {
-      if (j === i) { t.classList.add("active"); }
-      else { t.classList.remove("active"); }
+      t.classList.toggle("active", j === i);
     });
     document.getElementById("song-meta").textContent = songMetas[i];
     setSongClass(i);
     if (switched) spawnNotes();
-    syncLyricsForPanel(i, audio.currentTime, false);
+    syncLyricsForPanel(i, audio.currentTime);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  function syncLyricsForPanel(panelIdx, t, doScroll) {
+  function syncLyricsForPanel(panelIdx, t) {
     var lines = allLines[panelIdx];
     if (!lines || !lines.length) return;
     lines.forEach(function(l) { l.classList.remove("active", "past"); });
@@ -693,9 +595,7 @@
       lines[j].classList.add(j === activeIdx ? "active" : "past");
     }
     lastActiveIdx[panelIdx] = activeIdx;
-    if (doScroll !== false && activeIdx >= 0) {
-      lines[activeIdx].scrollIntoView({ behavior: "smooth", block: "center" });
-    }
+    if (activeIdx >= 0) lines[activeIdx].scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   /* ── tap a lyric line to seek ── */
@@ -717,7 +617,11 @@
     audio.volume = tracks[i].volume;
     setLabel(tracks[i].label);
     progressBar.value = 0;
-    showSong(i);
+    // update tabs + meta silently
+    document.querySelectorAll(".song-tab").forEach(function (t, j) {
+      t.classList.toggle("active", j === i);
+    });
+    document.getElementById("song-meta").textContent = songMetas[i];
     audio.load();
     audio.addEventListener("canplay", function onCan() {
       audio.removeEventListener("canplay", onCan);
@@ -755,21 +659,10 @@
 
   audio.addEventListener("ended", function () {
     var next = current + 1;
-    if (next < tracks.length) {
-      playTrack(next);
-    } else if (looping) {
-      playTrack(0);
-    } else {
-      setIcons(false); progressBar.value = 0;
-    }
+    if (next < tracks.length) { playTrack(next); }
+    else if (looping) { playTrack(0); }
+    else { setIcons(false); progressBar.value = 0; }
   });
-
-  window.toggleLoop = function() {
-    looping = !looping;
-    var btn = document.getElementById("loop-btn");
-    btn.style.opacity = looping ? "1" : "0.4";
-    btn.title = looping ? "Loop on" : "Loop off";
-  };
 
   audio.addEventListener("timeupdate", function () {
     if (audio.duration && !isNaN(audio.duration)) {
@@ -788,19 +681,23 @@
     if (audio.duration && !isNaN(audio.duration)) audio.currentTime = (val / 100) * audio.duration;
   };
   window.replayTrack = function () { playTrack(0); };
-  window.nextTrack = function () {
-    var next = (current + 1) % tracks.length;
-    playTrack(next);
-  };
+  window.nextTrack = function () { playTrack((current+1) % tracks.length); };
   window.prevTrack = function () {
-    // if more than 3s in, restart current — else go to previous
-    if (audio.currentTime > 3) {
-      audio.currentTime = 0;
-    } else {
-      var prev = (current - 1 + tracks.length) % tracks.length;
-      playTrack(prev);
-    }
+    if (audio.currentTime > 3) { audio.currentTime = 0; }
+    else { playTrack((current-1+tracks.length) % tracks.length); }
   };
+  window.toggleLoop = function () {
+    looping = !looping;
+    var btn = document.getElementById("loop-btn");
+    if (btn) { btn.style.opacity = looping ? "1" : "0.4"; btn.title = looping ? "Loop on" : "Loop off"; }
+  };
+  window.navigate = function(e, url) {
+    e.preventDefault();
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({track:current,time:audio.currentTime,playing:!audio.paused,ts:Date.now()})); } catch(ex){}
+    document.body.classList.add("fade-out");
+    setTimeout(function(){ window.location.href=url; },240);
+  };
+  window.replayTrack = function () { playTrack(0); };
 
   /* ── actually start playing — must be called from gesture ── */
   function doPlay() {
@@ -838,19 +735,6 @@
     });
   }, { threshold: 0.08 });
   document.querySelectorAll(".lyric-section").forEach(function (s) { obs.observe(s); });
-
-  /* ── navigate: save state before leaving ── */
-  window.navigate = function(e, url) {
-    e.preventDefault();
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        track: current, time: audio.currentTime,
-        playing: !audio.paused, ts: Date.now()
-      }));
-    } catch(ex) {}
-    document.body.classList.add("fade-out");
-    setTimeout(function(){ window.location.href = url; }, 240);
-  };
 
   /* ── boot ── */
   window.addEventListener("load", function () {
