@@ -16,8 +16,7 @@
       overflow-x: hidden;
       opacity: 1; transition: opacity 0.25s ease;
     }
-    body.fade-out { opacity: 0;
-    }
+    body.fade-out { opacity: 0; }
 
     /* ── READ PROGRESS BAR ── */
     #read-progress {
@@ -147,14 +146,16 @@
       line-height: 1.85;
       color: #c8c6be;
       cursor: default;
-      transition: color 0.25s, transform 0.2s;
+      transition: color 0.3s, transform 0.3s, opacity 0.3s;
       display: block;
       padding: 1px 0;
       border-radius: 4px;
+      transform: translateX(0);
+      opacity: 1;
     }
     .lyric-line.active {
       color: #1a1a18;
-      transform: scale(1.015);
+      transform: translateX(4px) scale(1.018);
       animation: lyric-pulse 1.8s ease-in-out infinite;
     }
     body.song-0 .lyric-line.active { color: #993556; }
@@ -163,8 +164,8 @@
     body.song-1 .lyric-section-label::before { background: #5DCAA5; }
     .lyric-line.past { color: #888780; }
     @keyframes lyric-pulse {
-      0%, 100% { transform: scale(1.015); }
-      50%       { transform: scale(1.022); }
+      0%, 100% { transform: translateX(4px) scale(1.018); }
+      50%       { transform: translateX(4px) scale(1.026); }
     }
     .lyric-section-label {
       font-size: 10px; font-weight: 500;
@@ -177,17 +178,6 @@
       width: 5px; height: 5px; border-radius: 50%;
       background: #d3d1c7; flex-shrink: 0; transition: background 0.4s;
     }
-    .wave-bars {
-      display: inline-flex; align-items: flex-end; gap: 2px;
-      height: 12px; margin-left: 6px; vertical-align: middle;
-    }
-    .wave-bars span { display: block; width: 2px; background: #888780; border-radius: 1px; }
-    .wave-bars.playing span:nth-child(1) { animation: bar 0.9s ease-in-out infinite; }
-    .wave-bars.playing span:nth-child(2) { animation: bar 0.9s ease-in-out 0.2s infinite; }
-    .wave-bars.playing span:nth-child(3) { animation: bar 0.9s ease-in-out 0.4s infinite; }
-    .wave-bars.playing span:nth-child(4) { animation: bar 0.9s ease-in-out 0.1s infinite; }
-    @keyframes bar { 0%,100%{height:3px} 50%{height:12px} }
-    .wave-bars:not(.playing) span { height: 4px; }
     .note-particle {
       position: fixed; font-size: 16px; color: #888780;
       pointer-events: none; z-index: 999;
@@ -201,6 +191,25 @@
       transition: opacity 0.2s;
     }
     .nav-track-btn:hover { opacity: 1; }
+
+    /* ── waveform bars ── */
+    .wave-bars {
+      display: inline-flex; align-items: flex-end; gap: 2px;
+      height: 12px; margin-left: 6px; vertical-align: middle;
+    }
+    .wave-bars span {
+      display: block; width: 2px; background: #888780; border-radius: 1px;
+      transform-origin: bottom;
+    }
+    .wave-bars.playing span:nth-child(1) { animation: bar 0.9s ease-in-out infinite; }
+    .wave-bars.playing span:nth-child(2) { animation: bar 0.9s ease-in-out 0.2s infinite; }
+    .wave-bars.playing span:nth-child(3) { animation: bar 0.9s ease-in-out 0.4s infinite; }
+    .wave-bars.playing span:nth-child(4) { animation: bar 0.9s ease-in-out 0.1s infinite; }
+    @keyframes bar {
+      0%, 100% { height: 3px; }
+      50%       { height: 12px; }
+    }
+    .wave-bars:not(.playing) span { height: 4px; }
 
     /* ── NO LYRICS NOTICE ── */
     .no-lyrics {
@@ -339,7 +348,7 @@
   </div>
 
   <!-- ── SONG 1: CARLA'S SONG ── -->
-  <div class="lyrics-block" id="lyrics-1" style="display:none">
+  <div class="lyrics-block" id="lyrics-1">
     <div class="lyric-section">
       <div class="lyric-section-label">verse 1</div>
       <span class="lyric-line" data-t="17.5">There is a bridge that leads to troubled waters</span>
@@ -488,9 +497,10 @@
   var trackLabel  = document.getElementById("track-label");
   var iconPlay    = document.getElementById("icon-play");
   var iconPause   = document.getElementById("icon-pause");
-  var waveBars    = document.getElementById("wave-bars");
   var tapHint     = document.getElementById("tap-hint");
   var readBar     = document.getElementById("read-progress");
+
+  var waveBars = document.getElementById("wave-bars");
 
   function setIcons(p) {
     iconPlay.style.display  = p ? "none" : "";
@@ -500,7 +510,12 @@
 
   function setLabel(txt) {
     trackLabel.classList.add("fade");
-    setTimeout(function () { trackLabel.textContent = txt; trackLabel.classList.remove("fade"); }, 300);
+    setTimeout(function () {
+      // keep wave bars inside label
+      trackLabel.innerHTML = txt + '<span class="wave-bars' + (audio.paused ? '' : ' playing') + '" id="wave-bars"><span></span><span></span><span></span><span></span></span>';
+      waveBars = document.getElementById("wave-bars");
+      trackLabel.classList.remove("fade");
+    }, 300);
   }
 
   function saveState() {
@@ -522,22 +537,23 @@
   function syncLyrics(t) {
     var lines = allLines[current];
     if (!lines || !lines.length) return;
-    var block = document.getElementById("lyrics-" + current);
-    if (!block || block.style.display === "none") return;
     var activeIdx = -1;
     for (var i = lines.length - 1; i >= 0; i--) {
       if (t >= parseFloat(lines[i].dataset.t)) { activeIdx = i; break; }
     }
-    if (activeIdx === lastActiveIdx[current]) return;
+    if (activeIdx === lastActiveIdx[current]) return; // nothing changed
+    // unmark old
     if (lastActiveIdx[current] >= 0) {
       lines[lastActiveIdx[current]].classList.remove("active");
       lines[lastActiveIdx[current]].classList.add("past");
     }
+    // mark new
     if (activeIdx >= 0) {
       lines[activeIdx].classList.remove("past");
       lines[activeIdx].classList.add("active");
       lines[activeIdx].scrollIntoView({ behavior: "smooth", block: "center" });
     }
+    // mark everything before as past
     for (var j = 0; j < activeIdx; j++) {
       lines[j].classList.remove("active");
       lines[j].classList.add("past");
@@ -546,34 +562,11 @@
   }
 
   /* ── show lyrics panel — VISUAL ONLY, never touches audio ── */
-  function setSongClass(i) {
-    document.body.classList.remove("song-0", "song-1");
-    document.body.classList.add("song-" + i);
-  }
-
-  function spawnNotes() {
-    var notes = ["♪","♫","♩","♬"];
-    var cx = window.innerWidth/2, cy = window.innerHeight-80;
-    for (var n=0;n<5;n++) { (function(idx){
-      setTimeout(function(){
-        var el=document.createElement("span");
-        el.className="note-particle";
-        el.textContent=notes[idx%notes.length];
-        el.style.left=(cx+(Math.random()-0.5)*160)+"px";
-        el.style.top=(cy-Math.random()*30)+"px";
-        document.body.appendChild(el);
-        setTimeout(function(){ el.remove(); },950);
-      },idx*100);
-    })(n); }
-  }
-
   window.showSong = function (i) {
     var switched = (i !== current);
-    document.getElementById("lyrics-0").style.display = (i === 0) ? "block" : "none";
-    document.getElementById("lyrics-1").style.display = (i === 1) ? "block" : "none";
-    // make sure all sections in the shown block are visible
-    var block = document.getElementById("lyrics-" + i);
-    block.querySelectorAll(".lyric-section").forEach(function(s){ s.classList.add("visible"); });
+    document.querySelectorAll(".lyrics-block").forEach(function (b, j) {
+      b.classList.toggle("active", j === i);
+    });
     document.querySelectorAll(".song-tab").forEach(function (t, j) {
       t.classList.toggle("active", j === i);
     });
@@ -581,7 +574,6 @@
     setSongClass(i);
     if (switched) spawnNotes();
     syncLyricsForPanel(i, audio.currentTime);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   function syncLyricsForPanel(panelIdx, t) {
@@ -618,11 +610,7 @@
     audio.volume = tracks[i].volume;
     setLabel(tracks[i].label);
     progressBar.value = 0;
-    // update tabs + meta silently
-    document.querySelectorAll(".song-tab").forEach(function (t, j) {
-      t.classList.toggle("active", j === i);
-    });
-    document.getElementById("song-meta").textContent = songMetas[i];
+    showSong(i);
     audio.load();
     audio.addEventListener("canplay", function onCan() {
       audio.removeEventListener("canplay", onCan);
@@ -660,10 +648,21 @@
 
   audio.addEventListener("ended", function () {
     var next = current + 1;
-    if (next < tracks.length) { playTrack(next); }
-    else if (looping) { playTrack(0); }
-    else { setIcons(false); progressBar.value = 0; }
+    if (next < tracks.length) {
+      playTrack(next);
+    } else if (looping) {
+      playTrack(0);
+    } else {
+      setIcons(false); progressBar.value = 0;
+    }
   });
+
+  window.toggleLoop = function() {
+    looping = !looping;
+    var btn = document.getElementById("loop-btn");
+    btn.style.opacity = looping ? "1" : "0.4";
+    btn.title = looping ? "Loop on" : "Loop off";
+  };
 
   audio.addEventListener("timeupdate", function () {
     if (audio.duration && !isNaN(audio.duration)) {
@@ -687,18 +686,25 @@
     if (audio.currentTime > 3) { audio.currentTime = 0; }
     else { playTrack((current-1+tracks.length) % tracks.length); }
   };
-  window.toggleLoop = function () {
-    looping = !looping;
-    var btn = document.getElementById("loop-btn");
-    if (btn) { btn.style.opacity = looping ? "1" : "0.4"; btn.title = looping ? "Loop on" : "Loop off"; }
-  };
-  window.navigate = function(e, url) {
-    e.preventDefault();
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({track:current,time:audio.currentTime,playing:!audio.paused,ts:Date.now()})); } catch(ex){}
-    document.body.classList.add("fade-out");
-    setTimeout(function(){ window.location.href=url; },240);
-  };
-  window.replayTrack = function () { playTrack(0); };
+
+  function setSongClass(i) {
+    document.body.classList.remove("song-0","song-1");
+    document.body.classList.add("song-"+i);
+  }
+  function spawnNotes() {
+    var notes=["♪","♫","♩","♬"], cx=window.innerWidth/2, cy=window.innerHeight-80;
+    for (var n=0;n<5;n++){(function(idx){
+      setTimeout(function(){
+        var el=document.createElement("span");
+        el.className="note-particle";
+        el.textContent=notes[idx%notes.length];
+        el.style.left=(cx+(Math.random()-0.5)*160)+"px";
+        el.style.top=(cy-Math.random()*30)+"px";
+        document.body.appendChild(el);
+        setTimeout(function(){ el.remove(); },950);
+      },idx*100);
+    })(n);}
+  }
 
   /* ── actually start playing — must be called from gesture ── */
   function doPlay() {
@@ -736,6 +742,19 @@
     });
   }, { threshold: 0.08 });
   document.querySelectorAll(".lyric-section").forEach(function (s) { obs.observe(s); });
+
+  /* ── navigate: save state before leaving ── */
+  window.navigate = function(e, url) {
+    e.preventDefault();
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        track: current, time: audio.currentTime,
+        playing: !audio.paused, ts: Date.now()
+      }));
+    } catch(ex) {}
+    document.body.classList.add("fade-out");
+    setTimeout(function(){ window.location.href = url; }, 240);
+  };
 
   /* ── boot ── */
   window.addEventListener("load", function () {
