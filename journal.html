@@ -475,15 +475,19 @@
     progressBar.value = 0;
     audio.src = tracks[i].src;
     audio.volume = muted ? 0 : (volSlider.value/100 * tracks[i].volume * 2);
-    audio.load();
     if (andPlay) {
-      audio.addEventListener("canplay", function onCan(){
-        audio.removeEventListener("canplay", onCan);
-        if (seekTo > 0) audio.currentTime = seekTo;
-        audio.play()
-          .then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; })
-          .catch(function(){ setIcons(false); if(tapHint) tapHint.style.display=""; });
-      }, { once: true });
+      audio.play()
+        .then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; if(seekTo>0) audio.currentTime=seekTo; })
+        .catch(function(){
+          audio.load();
+          audio.addEventListener("canplay", function onCan(){
+            audio.removeEventListener("canplay", onCan);
+            if(seekTo>0) audio.currentTime=seekTo;
+            audio.play().then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; }).catch(function(){});
+          }, { once: true });
+        });
+    } else {
+      audio.load();
     }
   }
 
@@ -569,6 +573,13 @@
 
   window.navigate = function(e, url){
     e.preventDefault();
+    // save current position before leaving so the next page can resume
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        track: current, time: audio.currentTime,
+        playing: !audio.paused, ts: Date.now()
+      }));
+    } catch(ex){}
     document.body.classList.add("fade-out");
     setTimeout(function(){ window.location.href=url; }, 240);
   };
@@ -576,27 +587,32 @@
   /* ── boot ── */
   window.addEventListener("load", function(){
     var fromWelcome = window.location.search.indexOf("autoplay=1") !== -1;
+
+    // always check localStorage first — cross-page resume
+    var raw; try{ raw=localStorage.getItem(STORAGE_KEY); }catch(e){}
+    if (!fromWelcome && raw) {
+      try {
+        var s=JSON.parse(raw), age=(Date.now()-s.ts)/1000;
+        if (age < 5 && s.track < tracks.length) {
+          // came from another page very recently — resume seamlessly
+          gestureReady = true;
+          if(tapHint) tapHint.style.display="none";
+          var resumeTime = s.time + (s.playing ? age : 0);
+          loadTrack(s.track, resumeTime, s.playing);
+          return;
+        }
+      } catch(e){}
+    }
+
     if (fromWelcome) {
-      // fresh entry from welcome — always start from track 0
+      // fresh from welcome — start track 0
       try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
       gestureReady = true;
       if(tapHint) tapHint.style.display="none";
       loadTrack(0, 0, true);
       return;
     }
-    // check for resume state
-    var raw; try{ raw=localStorage.getItem(STORAGE_KEY); }catch(e){}
-    if (raw) {
-      try {
-        var s=JSON.parse(raw), age=(Date.now()-s.ts)/1000;
-        if (age<60 && s.track<tracks.length && s.time>0) {
-          gestureReady=true;
-          if(tapHint) tapHint.style.display="none";
-          loadTrack(s.track, s.time+(s.playing?age:0), true);
-          return;
-        }
-      } catch(e){}
-    }
+
     // default — wait for gesture
     if(tapHint) tapHint.style.display="";
     loadTrack(0, 0, false);
