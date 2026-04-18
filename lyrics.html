@@ -410,6 +410,7 @@
     switchPanel(i);
     audio.src = tracks[i].src;
     audio.volume = muted ? 0 : (volSlider.value/100 * tracks[i].volume * 2);
+    audio.load();
     if (andPlay) {
       audio.addEventListener("canplay", function onCan(){
         audio.removeEventListener("canplay", onCan);
@@ -419,7 +420,6 @@
           .catch(function(){ setIcons(false); if(tapHint) tapHint.style.display=""; });
       }, { once: true });
     }
-    audio.load();
   }
 
   /* ── auto-advance ── */
