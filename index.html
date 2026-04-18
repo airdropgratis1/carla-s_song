@@ -4,63 +4,46 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>carla's song — a reading</title>
+  <meta name="description" content="An interpretation of a letter, and what it means for both sides.">
+  <meta property="og:title" content="carla's song — a reading">
+  <meta property="og:description" content="An interpretation of a letter, and what it means for both sides.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://og-image.vercel.app/carla%27s%20song%20%E2%80%94%20a%20reading.png">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♪</text></svg>">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-      background: #fafaf9;
-      color: #1a1a18;
-      line-height: 1.7;
-      padding-bottom: 120px;
-      overflow-x: hidden;
+      background: #fafaf9; color: #1a1a18; line-height: 1.7;
+      padding-bottom: 120px; overflow-x: hidden;
+      opacity: 1; transition: opacity 0.25s ease;
     }
+    body.fade-out { opacity: 0; }
 
-    /* ── READ PROGRESS BAR ── */
     #read-progress {
-      position: fixed;
-      top: 0; left: 0;
-      height: 2px;
-      width: 0%;
-      background: #888780;
-      z-index: 200;
-      transition: width 0.1s linear;
+      position: fixed; top: 0; left: 0; height: 2px; width: 0%;
+      background: #888780; z-index: 200; transition: width 0.1s linear;
     }
 
-    /* ── NAV TAB ── */
     .nav-tab {
-      position: fixed;
-      top: 12px; right: 16px;
-      z-index: 150;
-      display: flex;
-      gap: 6px;
+      position: fixed; top: 12px; right: 16px; z-index: 150;
+      display: flex; gap: 6px;
     }
     .nav-btn {
-      font-size: 11px; font-weight: 500;
-      padding: 5px 12px;
-      border-radius: 20px;
-      border: 0.5px solid #d3d1c7;
-      background: #fafaf9;
-      color: #888780;
-      cursor: pointer;
-      text-decoration: none;
-      letter-spacing: 0.04em;
+      font-size: 11px; font-weight: 500; padding: 5px 12px;
+      border-radius: 20px; border: 0.5px solid #d3d1c7;
+      background: #fafaf9; color: #888780; cursor: pointer;
+      text-decoration: none; letter-spacing: 0.04em;
       transition: background 0.15s, color 0.15s;
     }
     .nav-btn:hover { background: #f1efe8; color: #1a1a18; }
     .nav-btn.active { background: #1a1a18; color: #fafaf9; border-color: #1a1a18; }
 
-    /* ── STICKY PLAYER ── */
     .sticky-player {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      background: #fafaf9;
-      border-top: 0.5px solid #e0ddd6;
-      padding: 10px 20px;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #fafaf9; border-top: 0.5px solid #e0ddd6;
+      padding: 10px 20px; z-index: 100;
+      display: flex; align-items: center; gap: 12px;
     }
     #pp-btn {
       background: none; border: none; cursor: pointer;
@@ -68,29 +51,48 @@
     }
     #pp-btn svg { display: block; }
     .player-info { flex: 1; min-width: 0; }
+    .player-top-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 5px;
+    }
     #track-label {
       font-size: 11px; color: #888780;
-      white-space: nowrap; overflow: hidden;
-      text-overflow: ellipsis; margin-bottom: 5px;
-      transition: opacity 0.3s;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: opacity 0.3s; flex: 1; min-width: 0;
     }
     #track-label.fade { opacity: 0; }
+    #time-display {
+      font-size: 10px; color: #b4b2a9; flex-shrink: 0;
+      margin-left: 8px; font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
     #progress {
-      width: 100%; height: 3px;
-      accent-color: #888780; cursor: pointer;
+      width: 100%; height: 3px; accent-color: #888780; cursor: pointer;
       appearance: none; -webkit-appearance: none;
       background: #e0ddd6; border-radius: 2px; outline: none;
     }
     #progress::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 10px; height: 10px;
+      -webkit-appearance: none; width: 10px; height: 10px;
+      border-radius: 50%; background: #888780; cursor: pointer;
+    }
+    .player-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    #volume-btn {
+      background: none; border: none; cursor: pointer; padding: 0;
+      opacity: 0.6; transition: opacity 0.2s; display: flex; align-items: center;
+    }
+    #volume-btn:hover { opacity: 1; }
+    #volume-slider {
+      width: 56px; height: 3px; accent-color: #888780; cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      background: #e0ddd6; border-radius: 2px; outline: none;
+    }
+    #volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 9px; height: 9px;
       border-radius: 50%; background: #888780; cursor: pointer;
     }
     .replay-btn {
-      background: none; border: none; cursor: pointer;
-      padding: 0 0 0 4px; flex-shrink: 0;
-      display: flex; align-items: center; opacity: 0.7;
-      transition: opacity 0.2s;
+      background: none; border: none; cursor: pointer; padding: 0;
+      display: flex; align-items: center; opacity: 0.6; transition: opacity 0.2s;
     }
     .replay-btn:hover { opacity: 1; }
     #tap-hint {
@@ -98,129 +100,59 @@
       animation: pulse 1.8s ease-in-out infinite;
       white-space: nowrap; flex-shrink: 0;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 0.4; }
-      50% { opacity: 1; }
-    }
+    @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
 
-    /* ── PAGE ── */
     .page { max-width: 680px; margin: 0 auto; padding: 3rem 1.5rem; }
     .header { border-bottom: 0.5px solid #e0ddd6; padding-bottom: 1.5rem; margin-bottom: 2rem; }
-    .title { font-size: 26px; font-weight: 500; color: #1a1a18; line-height: 1.3; margin-bottom: 0.4rem; }
+    .title { font-size: 26px; font-weight: 500; line-height: 1.3; margin-bottom: 0.4rem; }
     .subtitle { font-size: 14px; color: #888780; }
     .tags { margin-top: 0.75rem; }
     .tag {
-      display: inline-block; font-size: 12px;
-      background: #f1efe8; color: #5f5e5a;
-      border-radius: 8px; padding: 3px 10px;
-      margin: 0 4px 4px 0;
+      display: inline-block; font-size: 12px; background: #f1efe8; color: #5f5e5a;
+      border-radius: 8px; padding: 3px 10px; margin: 0 4px 4px 0;
       border: 0.5px solid #d3d1c7;
     }
-
-    /* ── SECTIONS WITH FADE-IN ── */
     .section {
-      margin-bottom: 2.5rem;
-      opacity: 0;
-      transform: translateY(16px);
+      margin-bottom: 2.5rem; opacity: 0; transform: translateY(16px);
       transition: opacity 0.5s ease, transform 0.5s ease;
     }
-    .section.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    .section.visible { opacity: 1; transform: translateY(0); }
     .section-label {
-      font-size: 11px; font-weight: 500;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      color: #b4b2a9; margin-bottom: 1rem;
-      cursor: pointer;
-      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #b4b2a9; margin-bottom: 1rem;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
       user-select: none;
     }
-    .section-label::after {
-      content: '▾';
-      font-size: 10px;
-      color: #d3d1c7;
-      transition: transform 0.2s;
-    }
+    .section-label::after { content: '▾'; font-size: 10px; color: #d3d1c7; transition: transform 0.2s; }
     .section-label.collapsed::after { transform: rotate(-90deg); }
-    .section-body {
-      overflow: hidden;
-      transition: max-height 0.35s ease, opacity 0.3s ease;
-      max-height: 2000px;
-      opacity: 1;
-    }
-    .section-body.collapsed {
-      max-height: 0;
-      opacity: 0;
-    }
-
-    .q {
-      background: #f1efe8;
-      border-radius: 12px;
-      padding: 1rem 1.25rem;
-      margin-bottom: 0.75rem;
-    }
+    .section-body { overflow: hidden; transition: max-height 0.35s ease, opacity 0.3s ease; max-height: 2000px; opacity: 1; }
+    .section-body.collapsed { max-height: 0; opacity: 0; }
+    .q { background: #f1efe8; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; }
     .q p { font-size: 15px; color: #1a1a18; line-height: 1.65; }
-    .a {
-      padding: 0.25rem 0 0.25rem 1.25rem;
-      border-left: 2px solid #d3d1c7;
-      margin-bottom: 1.5rem;
-    }
+    .a { padding: 0.25rem 0 0.25rem 1.25rem; border-left: 2px solid #d3d1c7; margin-bottom: 1.5rem; }
     .a p { font-size: 15px; color: #1a1a18; line-height: 1.75; margin-bottom: 0.75rem; }
     .a p:last-child { margin-bottom: 0; }
     .a h4 { font-size: 13px; font-weight: 500; color: #888780; margin: 1rem 0 0.4rem; }
     .a ul { padding-left: 1.2rem; margin-bottom: 0.75rem; }
     .a ul li { font-size: 15px; color: #1a1a18; line-height: 1.7; margin-bottom: 0.3rem; }
-
-    /* ── HIGHLIGHT — hover + copy ── */
     .highlight {
-      background: #e6f1fb;
-      color: #185fa5;
-      padding: 0.9rem 1.1rem;
-      border-radius: 8px;
-      font-size: 15px;
-      line-height: 1.7;
-      margin: 1rem 0;
-      font-style: italic;
-      cursor: pointer;
-      border-left: 3px solid transparent;
-      transition: border-color 0.2s, background 0.2s;
-      position: relative;
+      background: #e6f1fb; color: #185fa5; padding: 0.9rem 1.1rem;
+      border-radius: 8px; font-size: 15px; line-height: 1.7; margin: 1rem 0;
+      font-style: italic; cursor: pointer; border-left: 3px solid transparent;
+      transition: border-color 0.2s, background 0.2s; position: relative;
     }
-    .highlight:hover {
-      border-left-color: #185fa5;
-      background: #d9ecf9;
-    }
-    .highlight.final {
-      font-style: normal;
-      font-size: 16px;
-      line-height: 1.8;
-    }
+    .highlight:hover { border-left-color: #185fa5; background: #d9ecf9; }
+    .highlight.final { font-style: normal; font-size: 16px; line-height: 1.8; }
     .copy-toast {
-      position: absolute;
-      top: -28px; right: 8px;
-      font-size: 11px;
-      background: #1a1a18;
-      color: #fafaf9;
-      padding: 3px 8px;
-      border-radius: 6px;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s;
-      font-style: normal;
-      white-space: nowrap;
+      position: absolute; top: -28px; right: 8px; font-size: 11px;
+      background: #1a1a18; color: #fafaf9; padding: 3px 8px;
+      border-radius: 6px; pointer-events: none; opacity: 0;
+      transition: opacity 0.2s; font-style: normal; white-space: nowrap;
     }
     .copy-toast.show { opacity: 1; }
-
     hr.divider { border: none; border-top: 0.5px solid #e0ddd6; margin: 2rem 0; }
-    .footer {
-      font-size: 13px; color: #b4b2a9;
-      text-align: center;
-      padding-top: 1.5rem;
-      border-top: 0.5px solid #e0ddd6;
-    }
+    .footer { font-size: 13px; color: #b4b2a9; text-align: center; padding-top: 1.5rem; border-top: 0.5px solid #e0ddd6; }
 
-    /* ── DARK MODE ── */
     @media (prefers-color-scheme: dark) {
       body { background: #1a1a18; color: #f1efe8; }
       .header { border-color: #3a3a38; }
@@ -239,7 +171,7 @@
       hr.divider { border-color: #3a3a38; }
       .footer { color: #5f5e5a; border-color: #3a3a38; }
       .sticky-player { background: #1a1a18; border-color: #3a3a38; }
-      #progress { background: #3a3a38; }
+      #progress, #volume-slider { background: #3a3a38; }
       #read-progress { background: #b4b2a9; }
       .nav-btn { background: #1a1a18; border-color: #444441; color: #888780; }
       .nav-btn:hover { background: #2c2c2a; color: #f1efe8; }
@@ -248,24 +180,19 @@
   </style>
 </head>
 <body>
-
 <div id="read-progress"></div>
-
 <nav class="nav-tab">
-  <a href="index.html" class="nav-btn active">journal</a>
-  <a href="lyrics.html" class="nav-btn">lyrics</a>
+  <a href="index.html" class="nav-btn active" onclick="navigate(event,'index.html')">journal</a>
+  <a href="lyrics.html" class="nav-btn" onclick="navigate(event,'lyrics.html')">lyrics</a>
 </nav>
 
 <div class="page">
-
   <div class="header">
     <div class="title">carla's song — a reading</div>
     <div class="subtitle">An interpretation of a letter, and what it means for both sides</div>
     <div class="tags">
-      <span class="tag">closure</span>
-      <span class="tag">one-sided love</span>
-      <span class="tag">pattern &amp; loop</span>
-      <span class="tag">receiver's pov</span>
+      <span class="tag">closure</span><span class="tag">one-sided love</span>
+      <span class="tag">pattern &amp; loop</span><span class="tag">receiver's pov</span>
       <span class="tag">both will be okay</span>
     </div>
   </div>
@@ -273,8 +200,8 @@
   <div class="section">
     <div class="section-label">The song that started it all</div>
     <div class="section-body">
-      <div class="q" style="display: flex; align-items: flex-start; gap: 1rem;">
-        <div style="width: 44px; height: 44px; border-radius: 8px; background: #e0ddd6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+      <div class="q" style="display:flex;align-items:flex-start;gap:1rem;">
+        <div style="width:44px;height:44px;border-radius:8px;background:#e0ddd6;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="10" stroke="#888780" stroke-width="1.4"/>
             <circle cx="12" cy="12" r="3" fill="#888780"/>
@@ -285,9 +212,9 @@
           </svg>
         </div>
         <div>
-          <div style="font-size: 15px; font-weight: 500; color: #1a1a18; margin-bottom: 2px;">Carla's Song</div>
-          <div style="font-size: 12px; color: #888780; margin-bottom: 8px;">Harry Styles · Kiss All The Time. Disco, Occasionally. · 2026</div>
-          <p style="font-size: 14px; color: #5f5e5a; line-height: 1.65; margin: 0;">A tender, unhurried track — the kind of song that doesn't try to resolve anything, just sits with the feeling. Named after a real friend. About the moment music first cracks someone open. Exists as its own complete thing. That's the whole point.</p>
+          <div style="font-size:15px;font-weight:500;margin-bottom:2px;">Carla's Song</div>
+          <div style="font-size:12px;color:#888780;margin-bottom:8px;">Harry Styles · Kiss All The Time. Disco, Occasionally. · 2026</div>
+          <p style="font-size:14px;color:#5f5e5a;line-height:1.65;margin:0;">A tender, unhurried track — the kind of song that doesn't try to resolve anything, just sits with the feeling. Named after a real friend. About the moment music first cracks someone open. Exists as its own complete thing. That's the whole point.</p>
         </div>
       </div>
     </div>
@@ -471,13 +398,9 @@
     </div>
   </div>
 
-  <div class="footer">
-    A conversation between a reader and Claude · April 2026
-  </div>
-
+  <div class="footer">A conversation between a reader and Claude · April 2026</div>
 </div>
 
-<!-- ── STICKY PLAYER ── -->
 <div class="sticky-player">
   <button id="pp-btn" onclick="togglePlay()">
     <svg id="icon-play" width="32" height="32" viewBox="0 0 32 32" fill="none">
@@ -491,208 +414,164 @@
     </svg>
   </button>
   <div class="player-info">
-    <div id="track-label">drop dead — olivia rodrigo</div>
+    <div class="player-top-row">
+      <div id="track-label">drop dead — olivia rodrigo</div>
+      <div id="time-display">0:00 / 0:00</div>
+    </div>
     <input id="progress" type="range" value="0" min="0" max="100" step="0.1" oninput="seekTo(this.value)">
   </div>
   <span id="tap-hint" style="display:none">tap anywhere ♪</span>
-  <button class="replay-btn" onclick="replayTrack()" title="Replay from start">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" fill="#b4b2a9"/>
-    </svg>
-  </button>
+  <div class="player-right">
+    <button id="volume-btn" onclick="toggleMute()" title="Mute">
+      <svg id="vol-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M11 5L6 9H2v6h4l5 4V5z" fill="#888780"/>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke="#888780" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="#888780" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <input id="volume-slider" type="range" value="75" min="0" max="100" step="1" oninput="setVolume(this.value)" title="Volume">
+    <button class="replay-btn" onclick="replayTrack()" title="Replay">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" fill="#b4b2a9"/>
+      </svg>
+    </button>
+  </div>
 </div>
 
 <audio id="bg-audio" style="display:none" preload="auto"></audio>
 
 <script>
-(function () {
+(function(){
   var STORAGE_KEY = 'cs_player';
   var tracks = [
     { src: "Olivia Rodrigo - drop dead (Official Music Video).mp3", label: "drop dead — olivia rodrigo", volume: 0.5 },
     { src: "Harry Styles - Carla's Song in the Live Lounge.mp3",    label: "carla's song — harry styles", volume: 1.0 }
   ];
-
-  var current = 0, started = false;
+  var current = 0, started = false, gestureReady = false, muted = false;
   var audio       = document.getElementById("bg-audio");
   var progressBar = document.getElementById("progress");
   var trackLabel  = document.getElementById("track-label");
+  var timeDisplay = document.getElementById("time-display");
   var iconPlay    = document.getElementById("icon-play");
   var iconPause   = document.getElementById("icon-pause");
   var tapHint     = document.getElementById("tap-hint");
   var readBar     = document.getElementById("read-progress");
+  var volSlider   = document.getElementById("volume-slider");
 
-  /* ── icons ── */
-  function setIcons(playing) {
-    iconPlay.style.display  = playing ? "none" : "";
-    iconPause.style.display = playing ? "" : "none";
-  }
-
-  /* ── label fade-swap ── */
+  function fmt(s) { var m=Math.floor(s/60),ss=Math.floor(s%60); return m+":"+(ss<10?"0":"")+ss; }
+  function setIcons(p) { iconPlay.style.display=p?"none":""; iconPause.style.display=p?"":"none"; }
   function setLabel(txt) {
     trackLabel.classList.add("fade");
-    setTimeout(function () {
-      trackLabel.textContent = txt;
-      trackLabel.classList.remove("fade");
-    }, 300);
+    setTimeout(function(){ trackLabel.textContent=txt; trackLabel.classList.remove("fade"); }, 300);
   }
-
-  /* ── save state to localStorage ── */
   function saveState() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        track: current,
-        time: audio.currentTime,
-        playing: !audio.paused,
-        ts: Date.now()
-      }));
-    } catch(e) {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ track:current, time:audio.currentTime, playing:!audio.paused, ts:Date.now() })); } catch(e){}
   }
 
-  /* ── play a track ── */
   function playTrack(i, fromTime) {
     current = i;
     audio.src = tracks[i].src;
-    audio.volume = tracks[i].volume;
+    audio.volume = muted ? 0 : (volSlider.value/100 * tracks[i].volume * 2);
     setLabel(tracks[i].label);
     progressBar.value = 0;
     audio.load();
-    audio.addEventListener("canplay", function onCan() {
+    audio.addEventListener("canplay", function onCan(){
       audio.removeEventListener("canplay", onCan);
-      if (fromTime) audio.currentTime = fromTime;
-      audio.play().then(function () {
-        setIcons(true); started = true;
-        if (tapHint) tapHint.style.display = "none";
-      }).catch(function () {
-        setIcons(false);
-        if (tapHint) tapHint.style.display = "";
-      });
+      if (fromTime != null) audio.currentTime = fromTime;
+      audio.play().then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; })
+           .catch(function(){ setIcons(false); if(tapHint) tapHint.style.display=""; });
     }, { once: true });
   }
 
-  /* ── restore state from localStorage (cross-page continuity) ── */
   function restoreOrStart() {
-    var raw;
-    try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) {}
+    var raw; try { raw=localStorage.getItem(STORAGE_KEY); } catch(e){}
     if (raw) {
-      var s = JSON.parse(raw);
-      var age = (Date.now() - s.ts) / 1000;
-      var resumeTime = s.time + (s.playing ? age : 0);
-      if (age < 60 && s.track < tracks.length) {
-        playTrack(s.track, resumeTime);
-        return;
-      }
+      try {
+        var s=JSON.parse(raw), age=(Date.now()-s.ts)/1000;
+        if (age<60 && s.track<tracks.length) { playTrack(s.track, s.time+(s.playing?age:0)); return; }
+      } catch(e){}
     }
-    playTrack(0);
+    current=0; audio.src=tracks[0].src; audio.volume=tracks[0].volume; audio.load();
   }
 
-  audio.addEventListener("ended", function () {
-    var next = current + 1;
-    if (next < tracks.length) { playTrack(next); }
-    else { setIcons(false); progressBar.value = 0; }
+  audio.addEventListener("ended", function(){
+    var next=current+1;
+    if(next<tracks.length) playTrack(next);
+    else { setIcons(false); progressBar.value=0; }
   });
 
-  audio.addEventListener("timeupdate", function () {
-    if (audio.duration && !isNaN(audio.duration)) {
-      progressBar.value = (audio.currentTime / audio.duration) * 100;
+  audio.addEventListener("timeupdate", function(){
+    if(audio.duration && !isNaN(audio.duration)){
+      progressBar.value=(audio.currentTime/audio.duration)*100;
+      timeDisplay.textContent = fmt(audio.currentTime)+" / "+fmt(audio.duration);
     }
     saveState();
   });
 
-  /* ── public controls ── */
-  window.togglePlay = function () {
-    if (!started) { playTrack(0); return; }
-    if (audio.paused) {
-      audio.play().then(function () { setIcons(true); if (tapHint) tapHint.style.display = "none"; });
-    } else {
-      audio.pause(); setIcons(false);
-    }
+  window.togglePlay = function(){
+    if(!started){ doPlay(); return; }
+    if(audio.paused){ audio.play().then(function(){ setIcons(true); }); }
+    else { audio.pause(); setIcons(false); }
   };
-  window.seekTo = function (val) {
-    if (audio.duration && !isNaN(audio.duration))
-      audio.currentTime = (val / 100) * audio.duration;
+  window.seekTo = function(v){ if(audio.duration&&!isNaN(audio.duration)) audio.currentTime=(v/100)*audio.duration; };
+  window.replayTrack = function(){ playTrack(0); };
+  window.setVolume = function(v){
+    muted = false;
+    audio.volume = (v/100) * tracks[current].volume * 2;
   };
-  window.replayTrack = function () { playTrack(0); };
+  window.toggleMute = function(){
+    muted = !muted;
+    audio.volume = muted ? 0 : (volSlider.value/100 * tracks[current].volume * 2);
+    document.getElementById("vol-icon").style.opacity = muted ? "0.3" : "1";
+  };
 
-  /* ── read progress bar ── */
-  window.addEventListener("scroll", function () {
-    var doc = document.documentElement;
-    var scrolled = doc.scrollTop || document.body.scrollTop;
-    var total = doc.scrollHeight - doc.clientHeight;
-    readBar.style.width = (total > 0 ? (scrolled / total * 100) : 0) + "%";
+  function doPlay(){
+    if(started) return;
+    audio.play().then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; })
+         .catch(function(){ setIcons(false); if(tapHint) tapHint.style.display=""; });
+  }
+  function onGesture(){ if(gestureReady) return; gestureReady=true; doPlay(); }
+  document.addEventListener("touchstart", onGesture, { passive:true });
+  document.addEventListener("click", onGesture);
+
+  window.addEventListener("scroll", function(){
+    var doc=document.documentElement, s=doc.scrollTop||document.body.scrollTop;
+    readBar.style.width=(doc.scrollHeight-doc.clientHeight>0?s/(doc.scrollHeight-doc.clientHeight)*100:0)+"%";
   });
 
-  /* ── fade-in sections on scroll ── */
-  var sections = document.querySelectorAll(".section");
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) { e.target.classList.add("visible"); observer.unobserve(e.target); }
-    });
-  }, { threshold: 0.08 });
-  sections.forEach(function (s) { observer.observe(s); });
+  var obs=new IntersectionObserver(function(e){ e.forEach(function(x){ if(x.isIntersecting){ x.target.classList.add("visible"); obs.unobserve(x.target); } }); },{ threshold:0.08 });
+  document.querySelectorAll(".section").forEach(function(s){ obs.observe(s); });
 
-  /* ── section collapse ── */
-  document.querySelectorAll(".section-label").forEach(function (lbl) {
-    lbl.addEventListener("click", function () {
-      var body = lbl.nextElementSibling;
-      if (!body || !body.classList.contains("section-body")) return;
-      lbl.classList.toggle("collapsed");
-      body.classList.toggle("collapsed");
-    });
-  });
-
-  /* ── highlight copy ── */
-  document.querySelectorAll(".highlight").forEach(function (h) {
-    h.addEventListener("click", function () {
-      var toast = h.querySelector(".copy-toast");
-      var text = h.childNodes[0].textContent.trim();
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).catch(function(){});
-      }
-      if (toast) {
-        toast.classList.add("show");
-        setTimeout(function () { toast.classList.remove("show"); }, 1500);
-      }
+  document.querySelectorAll(".section-label").forEach(function(lbl){
+    lbl.addEventListener("click", function(){
+      var body=lbl.nextElementSibling;
+      if(!body||!body.classList.contains("section-body")) return;
+      lbl.classList.toggle("collapsed"); body.classList.toggle("collapsed");
     });
   });
 
-  /* ── track label syncs with "final read" section ── */
-  var finalSection = document.querySelector(".section:last-of-type");
-  if (finalSection) {
-    var finalObs = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting && current === 1) {
-          setLabel("carla's song — playing ♪");
-          setTimeout(function () { setLabel(tracks[current].label); }, 3000);
-        }
-      });
-    }, { threshold: 0.5 });
-    finalObs.observe(finalSection);
+  document.querySelectorAll(".highlight").forEach(function(h){
+    h.addEventListener("click", function(){
+      var toast=h.querySelector(".copy-toast");
+      var text=h.childNodes[0].textContent.trim();
+      if(navigator.clipboard) navigator.clipboard.writeText(text).catch(function(){});
+      if(toast){ toast.classList.add("show"); setTimeout(function(){ toast.classList.remove("show"); },1500); }
+    });
+  });
+
+  var finalSection=document.querySelector(".section:last-of-type");
+  if(finalSection){
+    var fObs=new IntersectionObserver(function(e){ e.forEach(function(x){ if(x.isIntersecting&&current===1){ setLabel("carla's song — playing ♪"); setTimeout(function(){ setLabel(tracks[current].label); },3000); } }); },{ threshold:0.5 });
+    fObs.observe(finalSection);
   }
 
-  /* ── boot ── */
-  var gestureReady = false;
-  function doPlay() {
-    if (started) return;
-    audio.play().then(function () {
-      setIcons(true); started = true;
-      if (tapHint) tapHint.style.display = "none";
-    }).catch(function () {
-      setIcons(false);
-      if (tapHint) tapHint.style.display = "";
-    });
-  }
-  function onGesture() {
-    if (gestureReady) return;
-    gestureReady = true;
-    doPlay();
-  }
-  window.addEventListener("load", function () {
-    if (tapHint) tapHint.style.display = "";
-    restoreOrStart();
-  });
-  document.addEventListener("touchstart", onGesture, { passive: true });
-  document.addEventListener("click",      onGesture);
+  window.navigate = function(e, url){
+    e.preventDefault();
+    document.body.classList.add("fade-out");
+    setTimeout(function(){ window.location.href=url; }, 240);
+  };
 
+  window.addEventListener("load", function(){ if(tapHint) tapHint.style.display=""; restoreOrStart(); });
 })();
 </script>
 </body>
