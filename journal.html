@@ -9,7 +9,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-      background: #fafaf9;
+      background: #faf8f4;
       color: #1a1a18;
       line-height: 1.7;
       padding-bottom: 120px;
@@ -42,7 +42,7 @@
       padding: 5px 12px;
       border-radius: 20px;
       border: 0.5px solid #d3d1c7;
-      background: #fafaf9;
+      background: #faf8f4;
       color: #888780;
       cursor: pointer;
       text-decoration: none;
@@ -56,7 +56,7 @@
     .sticky-player {
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      background: #fafaf9;
+      background: #faf8f4;
       border-top: 0.5px solid #e0ddd6;
       padding: 10px 20px;
       z-index: 100;
@@ -176,8 +176,8 @@
 
     /* ── HIGHLIGHT — hover + copy ── */
     .highlight {
-      background: #e6f1fb;
-      color: #185fa5;
+      background: #fdf3e8;
+      color: #8a4e1a;
       padding: 0.9rem 1.1rem;
       border-radius: 8px;
       font-size: 15px;
@@ -190,7 +190,7 @@
       position: relative;
     }
     .highlight:hover {
-      border-left-color: #185fa5;
+      border-left-color: #8a4e1a;
       background: #d9ecf9;
     }
     .highlight.final {
@@ -214,7 +214,8 @@
     }
     .copy-toast.show { opacity: 1; }
 
-    hr.divider { border: none; border-top: 0.5px solid #e0ddd6; margin: 2rem 0; }
+    hr.divider { border: none; margin: 2rem 0; text-align: center; height: 1.2em; }
+    hr.divider::after { content: "· · ·"; font-size: 12px; color: #d3d1c7; letter-spacing: 0.4em; }
     .footer {
       font-size: 13px; color: #b4b2a9;
       text-align: center;
@@ -235,8 +236,8 @@
       .a { border-color: #444441; }
       .a p, .a ul li { color: #f1efe8; }
       .a h4 { color: #888780; }
-      .highlight { background: #0c447c; color: #b5d4f4; }
-      .highlight:hover { background: #0e508f; border-left-color: #b5d4f4; }
+      .highlight { background: #3d2008; color: #f0c48a; }
+      .highlight:hover { background: #4a2a0e; border-left-color: #f0c48a; }
       .copy-toast { background: #f1efe8; color: #1a1a18; }
       hr.divider { border-color: #3a3a38; }
       .footer { color: #5f5e5a; border-color: #3a3a38; }
