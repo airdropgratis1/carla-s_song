@@ -569,8 +569,8 @@
 
   window.showSong = function (i) {
     var switched = (i !== current);
-    document.getElementById("lyrics-0").style.display = (i === 0) ? "" : "none";
-    document.getElementById("lyrics-1").style.display = (i === 1) ? "" : "none";
+    document.getElementById("lyrics-0").style.display = (i === 0) ? "block" : "none";
+    document.getElementById("lyrics-1").style.display = (i === 1) ? "block" : "none";
     document.querySelectorAll(".song-tab").forEach(function (t, j) {
       t.classList.toggle("active", j === i);
     });
