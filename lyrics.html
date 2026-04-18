@@ -280,7 +280,7 @@
   </div>
 
   <!-- ── SONG 0: DROP DEAD ── -->
-  <div class="lyrics-block active" id="lyrics-0">
+  <div class="lyrics-block active" id="lyrics-0" style="display:block">
     <div class="lyric-section">
       <div class="lyric-section-label">verse 1</div>
       <span class="lyric-line" data-t="16.1">I know that the bar closes at 11</span>
@@ -427,7 +427,7 @@
   </div>
 
   <!-- ── SONG 1: CARLA'S SONG ── -->
-  <div class="lyrics-block" id="lyrics-1">
+  <div class="lyrics-block" id="lyrics-1" style="display:none">
     <div class="lyric-section">
       <div class="lyric-section-label">verse 1</div>
       <span class="lyric-line" data-t="17.5">There is a bridge that leads to troubled waters</span>
@@ -668,8 +668,8 @@
 
   window.showSong = function (i) {
     var switched = i !== current;
-    document.getElementById("lyrics-0").classList[i === 0 ? "add" : "remove"]("active");
-    document.getElementById("lyrics-1").classList[i === 1 ? "add" : "remove"]("active");
+    document.getElementById("lyrics-0").style.display = (i === 0) ? "block" : "none";
+    document.getElementById("lyrics-1").style.display = (i === 1) ? "block" : "none";
     document.querySelectorAll(".song-tab").forEach(function (t, j) {
       if (j === i) { t.classList.add("active"); }
       else { t.classList.remove("active"); }
