@@ -417,9 +417,20 @@
 
   /* ── auto-advance ── */
   audio.addEventListener("ended", function(){
-    var next = current+1;
-    if (next < tracks.length) play(next, 0);
-    else { setIcons(false); progressBar.value=0; }
+    var next = current + 1;
+    if (next < tracks.length) {
+      current = next;
+      trackLabel.textContent = tracks[next].label;
+      progressBar.value = 0;
+      switchPanel(next);
+      audio.volume = muted ? 0 : (volSlider.value/100 * tracks[next].volume * 2);
+      audio.src = tracks[next].src;
+      audio.play()
+        .then(function(){ setIcons(true); })
+        .catch(function(){ setIcons(false); });
+    } else {
+      setIcons(false); progressBar.value = 0;
+    }
   });
 
   /* ── progress + sync ── */
