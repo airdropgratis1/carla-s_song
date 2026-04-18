@@ -668,10 +668,8 @@
 
   window.showSong = function (i) {
     var switched = i !== current;
-    document.querySelectorAll(".lyrics-block").forEach(function (b, j) {
-      if (j === i) { b.classList.add("active"); }
-      else { b.classList.remove("active"); }
-    });
+    document.getElementById("lyrics-0").classList[i === 0 ? "add" : "remove"]("active");
+    document.getElementById("lyrics-1").classList[i === 1 ? "add" : "remove"]("active");
     document.querySelectorAll(".song-tab").forEach(function (t, j) {
       if (j === i) { t.classList.add("active"); }
       else { t.classList.remove("active"); }
