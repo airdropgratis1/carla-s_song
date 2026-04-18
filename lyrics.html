@@ -133,7 +133,7 @@
 
     /* ── LYRICS BLOCK ── */
     .lyrics-block { display: none; }
-    .lyrics-block.active { display: block; }
+    .lyrics-block.active { display: block; padding: 0 0.5rem; }
 
     .lyric-section {
       margin-bottom: 2rem;
@@ -669,15 +669,16 @@
   window.showSong = function (i) {
     var switched = i !== current;
     document.querySelectorAll(".lyrics-block").forEach(function (b, j) {
-      b.classList.toggle("active", j === i);
+      if (j === i) { b.classList.add("active"); }
+      else { b.classList.remove("active"); }
     });
     document.querySelectorAll(".song-tab").forEach(function (t, j) {
-      t.classList.toggle("active", j === i);
+      if (j === i) { t.classList.add("active"); }
+      else { t.classList.remove("active"); }
     });
     document.getElementById("song-meta").textContent = songMetas[i];
     setSongClass(i);
     if (switched) spawnNotes();
-    // sync classes but scroll to top of block — not to active line
     syncLyricsForPanel(i, audio.currentTime, false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
