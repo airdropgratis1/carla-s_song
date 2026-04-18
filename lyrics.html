@@ -135,27 +135,20 @@
     }
     .lyric-section.visible { opacity: 1; transform: translateY(0); }
 
-    .lyric-section-label {
-      font-size: 10px; font-weight: 500;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: #d3d1c7; margin-bottom: 0.75rem;
-    }
-
     .lyric-line {
       font-size: 18px;
       line-height: 1.85;
       color: #c8c6be;
       cursor: default;
-      transition: color 0.3s, transform 0.3s, opacity 0.3s;
+      transition: color 0.3s, transform 0.3s, font-size 0.3s;
       display: block;
-      padding: 1px 0;
+      padding: 1px 0 1px 4px;
       border-radius: 4px;
-      transform: translateX(0);
-      opacity: 1;
     }
     .lyric-line.active {
       color: #1a1a18;
-      transform: translateX(4px) scale(1.018);
+      transform: scale(1.018);
+      transform-origin: left center;
       animation: lyric-pulse 1.8s ease-in-out infinite;
     }
     /* song 0 = coral/pink, song 1 = teal */
@@ -166,12 +159,15 @@
 
     .lyric-line.past { color: #888780; }
     @keyframes lyric-pulse {
-      0%, 100% { transform: translateX(4px) scale(1.018); }
-      50%       { transform: translateX(4px) scale(1.026); }
+      0%, 100% { transform: scale(1.018); }
+      50%       { transform: scale(1.026); }
     }
 
     /* ── section label dots ── */
     .lyric-section-label {
+      font-size: 10px; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: #d3d1c7; margin-bottom: 0.75rem;
       display: flex; align-items: center; gap: 6px;
     }
     .lyric-section-label::before {
