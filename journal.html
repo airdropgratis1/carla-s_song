@@ -500,9 +500,13 @@
       progressBar.value = 0;
       audio.src = tracks[next].src;
       audio.volume = muted ? 0 : (volSlider.value/100 * tracks[next].volume * 2);
-      audio.play()
-        .then(function(){ setIcons(true); })
-        .catch(function(){ setIcons(false); });
+      audio.load();
+      audio.addEventListener("canplay", function onCan(){
+        audio.removeEventListener("canplay", onCan);
+        audio.play()
+          .then(function(){ setIcons(true); })
+          .catch(function(){ setIcons(false); });
+      }, { once: true });
     } else {
       setIcons(false); progressBar.value = 0;
     }
