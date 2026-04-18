@@ -677,10 +677,12 @@
     document.getElementById("song-meta").textContent = songMetas[i];
     setSongClass(i);
     if (switched) spawnNotes();
-    syncLyricsForPanel(i, audio.currentTime);
+    // sync classes but scroll to top of block — not to active line
+    syncLyricsForPanel(i, audio.currentTime, false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  function syncLyricsForPanel(panelIdx, t) {
+  function syncLyricsForPanel(panelIdx, t, doScroll) {
     var lines = allLines[panelIdx];
     if (!lines || !lines.length) return;
     lines.forEach(function(l) { l.classList.remove("active", "past"); });
@@ -692,7 +694,9 @@
       lines[j].classList.add(j === activeIdx ? "active" : "past");
     }
     lastActiveIdx[panelIdx] = activeIdx;
-    if (activeIdx >= 0) lines[activeIdx].scrollIntoView({ behavior: "smooth", block: "center" });
+    if (doScroll !== false && activeIdx >= 0) {
+      lines[activeIdx].scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   }
 
   /* ── tap a lyric line to seek ── */
