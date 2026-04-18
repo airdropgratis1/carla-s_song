@@ -571,6 +571,9 @@
     var switched = (i !== current);
     document.getElementById("lyrics-0").style.display = (i === 0) ? "block" : "none";
     document.getElementById("lyrics-1").style.display = (i === 1) ? "block" : "none";
+    // make sure all sections in the shown block are visible
+    var block = document.getElementById("lyrics-" + i);
+    block.querySelectorAll(".lyric-section").forEach(function(s){ s.classList.add("visible"); });
     document.querySelectorAll(".song-tab").forEach(function (t, j) {
       t.classList.toggle("active", j === i);
     });
