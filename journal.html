@@ -398,7 +398,7 @@
     </div>
   </div>
 
-  <div class="footer">a conversation between a reader and claude · april 2026</div>
+  <div class="footer">A conversation between a reader and Claude · April 2026</div>
 </div>
 
 <div class="sticky-player">
@@ -495,7 +495,14 @@
   audio.addEventListener("ended", function(){
     var next = current + 1;
     if (next < tracks.length) {
-      loadTrack(next, 0, true);
+      current = next;
+      trackLabel.textContent = tracks[next].label;
+      progressBar.value = 0;
+      audio.src = tracks[next].src;
+      audio.volume = muted ? 0 : (volSlider.value/100 * tracks[next].volume * 2);
+      audio.play()
+        .then(function(){ setIcons(true); })
+        .catch(function(){ setIcons(false); });
     } else {
       setIcons(false); progressBar.value = 0;
     }
