@@ -534,11 +534,7 @@
     audio.volume = tracks[i].volume;
     setLabel(tracks[i].label);
     progressBar.value = 0;
-    // update tabs + meta silently
-    document.querySelectorAll(".song-tab").forEach(function (t, j) {
-      t.classList.toggle("active", j === i);
-    });
-    document.getElementById("song-meta").textContent = songMetas[i];
+    showSong(i);
     audio.load();
     audio.addEventListener("canplay", function onCan() {
       audio.removeEventListener("canplay", onCan);
