@@ -9,7 +9,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-      background: #fafaf9;
+      background: #faf8f4;
       color: #1a1a18;
       line-height: 1.7;
       padding-bottom: 120px;
@@ -40,7 +40,7 @@
       padding: 5px 12px;
       border-radius: 20px;
       border: 0.5px solid #d3d1c7;
-      background: #fafaf9;
+      background: #faf8f4;
       color: #888780;
       cursor: pointer;
       text-decoration: none;
@@ -54,7 +54,7 @@
     .sticky-player {
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      background: #fafaf9;
+      background: #faf8f4;
       border-top: 0.5px solid #e0ddd6;
       padding: 10px 20px;
       z-index: 100;
@@ -114,7 +114,7 @@
       font-size: 12px; font-weight: 500;
       padding: 6px 16px; border-radius: 20px;
       border: 0.5px solid #d3d1c7;
-      background: #fafaf9; color: #888780;
+      background: #faf8f4; color: #888780;
       cursor: pointer; transition: all 0.15s;
       letter-spacing: 0.03em;
     }
@@ -158,10 +158,44 @@
       transform: translateX(4px) scale(1.018);
       animation: lyric-pulse 1.8s ease-in-out infinite;
     }
+    /* song 0 = coral/pink, song 1 = teal */
+    body.song-0 .lyric-line.active { color: #993556; }
+    body.song-1 .lyric-line.active { color: #0F6E56; }
+    body.song-0 .lyric-section-label::before { background: #ED93B1; }
+    body.song-1 .lyric-section-label::before { background: #5DCAA5; }
+
     .lyric-line.past { color: #888780; }
     @keyframes lyric-pulse {
       0%, 100% { transform: translateX(4px) scale(1.018); }
       50%       { transform: translateX(4px) scale(1.026); }
+    }
+
+    /* ── section label dots ── */
+    .lyric-section-label {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .lyric-section-label::before {
+      content: '';
+      display: inline-block;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #d3d1c7;
+      flex-shrink: 0;
+      transition: background 0.4s;
+    }
+
+    /* ── note particles ── */
+    .note-particle {
+      position: fixed;
+      font-size: 16px;
+      color: #888780;
+      pointer-events: none;
+      z-index: 999;
+      animation: note-float 0.9s ease-out forwards;
+    }
+    @keyframes note-float {
+      0%   { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(0.6); }
     }
 
     /* ── waveform bars ── */
@@ -594,7 +628,33 @@
   }
 
   /* ── show lyrics panel — VISUAL ONLY, never touches audio ── */
+  /* ── note particle burst ── */
+  function spawnNotes() {
+    var notes = ["♪", "♫", "♩", "♬"];
+    var cx = window.innerWidth / 2;
+    var cy = window.innerHeight - 80;
+    for (var n = 0; n < 5; n++) {
+      (function(idx) {
+        setTimeout(function() {
+          var el = document.createElement("span");
+          el.className = "note-particle";
+          el.textContent = notes[idx % notes.length];
+          el.style.left = (cx + (Math.random() - 0.5) * 160) + "px";
+          el.style.top = (cy - Math.random() * 30) + "px";
+          document.body.appendChild(el);
+          setTimeout(function(){ el.remove(); }, 950);
+        }, idx * 100);
+      })(n);
+    }
+  }
+
+  function setSongClass(i) {
+    document.body.classList.remove("song-0", "song-1");
+    document.body.classList.add("song-" + i);
+  }
+
   window.showSong = function (i) {
+    var switched = i !== current;
     document.querySelectorAll(".lyrics-block").forEach(function (b, j) {
       b.classList.toggle("active", j === i);
     });
@@ -602,7 +662,8 @@
       t.classList.toggle("active", j === i);
     });
     document.getElementById("song-meta").textContent = songMetas[i];
-    // re-sync whichever panel is now visible without touching audio
+    setSongClass(i);
+    if (switched) spawnNotes();
     syncLyricsForPanel(i, audio.currentTime);
   };
 
@@ -764,6 +825,7 @@
 
   /* ── boot ── */
   window.addEventListener("load", function () {
+    setSongClass(0);
     if (tapHint) tapHint.style.display = "";
     restoreState();
   });
