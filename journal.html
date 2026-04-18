@@ -468,87 +468,77 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ track:current, time:audio.currentTime, playing:!audio.paused, ts:Date.now() })); } catch(e){}
   }
 
-  function playTrack(i, fromTime) {
+  /* ── core: load and play a track ── */
+  function loadTrack(i, seekTo, andPlay) {
     current = i;
+    trackLabel.textContent = tracks[i].label;
+    progressBar.value = 0;
     audio.src = tracks[i].src;
     audio.volume = muted ? 0 : (volSlider.value/100 * tracks[i].volume * 2);
-    setLabel(tracks[i].label);
-    progressBar.value = 0;
-    audio.addEventListener("canplay", function onCan(){
-      audio.removeEventListener("canplay", onCan);
-      if (fromTime != null && fromTime > 0) audio.currentTime = fromTime;
-      audio.play()
-        .then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; })
-        .catch(function(){ setIcons(false); if(tapHint) tapHint.style.display=""; });
-    }, { once: true });
+    if (andPlay) {
+      audio.addEventListener("canplay", function onCan(){
+        audio.removeEventListener("canplay", onCan);
+        if (seekTo > 0) audio.currentTime = seekTo;
+        audio.play()
+          .then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; })
+          .catch(function(){ setIcons(false); if(tapHint) tapHint.style.display=""; });
+      }, { once: true });
+    }
     audio.load();
   }
 
-  function restoreOrStart() {
-    var raw; try { raw=localStorage.getItem(STORAGE_KEY); } catch(e){}
-    if (raw) {
-      try {
-        var s=JSON.parse(raw), age=(Date.now()-s.ts)/1000;
-        if (age<60 && s.track<tracks.length) { playTrack(s.track, s.time+(s.playing?age:0)); return; }
-      } catch(e){}
-    }
-    current=0; audio.src=tracks[0].src; audio.volume=tracks[0].volume; audio.load();
-  }
-
+  /* ── auto-advance when track ends ── */
   audio.addEventListener("ended", function(){
-    var next=current+1;
-    if(next<tracks.length) playTrack(next);
-    else { setIcons(false); progressBar.value=0; }
+    var next = current + 1;
+    if (next < tracks.length) {
+      loadTrack(next, 0, true);
+    } else {
+      setIcons(false); progressBar.value = 0;
+    }
   });
 
+  /* ── progress bar + time display ── */
   audio.addEventListener("timeupdate", function(){
-    if(audio.duration && !isNaN(audio.duration)){
-      progressBar.value=(audio.currentTime/audio.duration)*100;
-      timeDisplay.textContent = fmt(audio.currentTime)+" / "+fmt(audio.duration);
+    if (audio.duration && !isNaN(audio.duration)){
+      progressBar.value = (audio.currentTime / audio.duration) * 100;
+      timeDisplay.textContent = fmt(audio.currentTime) + " / " + fmt(audio.duration);
     }
     saveState();
   });
 
+  /* ── controls ── */
   window.togglePlay = function(){
-    if(!started){ doPlay(); return; }
-    if(audio.paused){ audio.play().then(function(){ setIcons(true); }); }
+    if (!started) { unlock(); return; }
+    if (audio.paused) audio.play().then(function(){ setIcons(true); });
     else { audio.pause(); setIcons(false); }
   };
-  window.seekTo = function(v){ if(audio.duration&&!isNaN(audio.duration)) audio.currentTime=(v/100)*audio.duration; };
-  window.replayTrack = function(){ playTrack(0); };
-  window.setVolume = function(v){
-    muted = false;
-    audio.volume = (v/100) * tracks[current].volume * 2;
+  window.seekTo = function(v){
+    if (audio.duration && !isNaN(audio.duration)) audio.currentTime = (v/100) * audio.duration;
   };
+  window.replayTrack = function(){ loadTrack(0, 0, true); };
+  window.setVolume = function(v){ muted=false; audio.volume=(v/100)*tracks[current].volume*2; };
   window.toggleMute = function(){
-    muted = !muted;
-    audio.volume = muted ? 0 : (volSlider.value/100 * tracks[current].volume * 2);
+    muted=!muted;
+    audio.volume = muted ? 0 : (volSlider.value/100*tracks[current].volume*2);
     document.getElementById("vol-icon").style.opacity = muted ? "0.3" : "1";
   };
 
-  function doPlay(){
-    if(started) return;
-    // src already set and loaded in restoreOrStart — just play
+  /* ── gesture unlock: first tap/touch anywhere starts music ── */
+  function unlock(){
+    if (started) return;
     audio.play()
       .then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; })
-      .catch(function(){
-        // if direct play fails, try with canplay
-        audio.addEventListener("canplay", function onCan(){
-          audio.removeEventListener("canplay", onCan);
-          audio.play().then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; }).catch(function(){});
-        }, { once: true });
-        audio.load();
-      });
+      .catch(function(){ if(tapHint) tapHint.style.display=""; });
   }
-  function onGesture(){ if(gestureReady) return; gestureReady=true; doPlay(); }
+  function onGesture(){ if(gestureReady) return; gestureReady=true; unlock(); }
   document.addEventListener("touchstart", onGesture, { passive:true });
   document.addEventListener("click", onGesture);
 
+  /* ── scroll / UI ── */
   window.addEventListener("scroll", function(){
     var doc=document.documentElement, s=doc.scrollTop||document.body.scrollTop;
     readBar.style.width=(doc.scrollHeight-doc.clientHeight>0?s/(doc.scrollHeight-doc.clientHeight)*100:0)+"%";
   });
-
   var obs=new IntersectionObserver(function(e){ e.forEach(function(x){ if(x.isIntersecting){ x.target.classList.add("visible"); obs.unobserve(x.target); } }); },{ threshold:0.08 });
   document.querySelectorAll(".section").forEach(function(s){ obs.observe(s); });
 
@@ -571,7 +561,9 @@
 
   var finalSection=document.querySelector(".section:last-of-type");
   if(finalSection){
-    var fObs=new IntersectionObserver(function(e){ e.forEach(function(x){ if(x.isIntersecting&&current===1){ setLabel("carla's song — playing ♪"); setTimeout(function(){ setLabel(tracks[current].label); },3000); } }); },{ threshold:0.5 });
+    var fObs=new IntersectionObserver(function(e){ e.forEach(function(x){
+      if(x.isIntersecting&&current===1){ setLabel("carla's song — playing ♪"); setTimeout(function(){ setLabel(tracks[1].label); },3000); }
+    }); },{ threshold:0.5 });
     fObs.observe(finalSection);
   }
 
@@ -581,24 +573,29 @@
     setTimeout(function(){ window.location.href=url; }, 240);
   };
 
+  /* ── boot ── */
   window.addEventListener("load", function(){
-    if(tapHint) tapHint.style.display="";
     var fromWelcome = window.location.search.indexOf("autoplay=1") !== -1;
-    if (fromWelcome) {
-      // user just clicked through welcome — their tap WAS the gesture, play immediately
-      gestureReady = true;
-      started = false;
-      restoreOrStart();
-      // small delay to let audio.load() settle, then play
-      setTimeout(function(){
-        if (!started) {
-          audio.play()
-            .then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; })
-            .catch(function(){ if(tapHint) tapHint.style.display=""; });
+    var raw; try{ raw=localStorage.getItem(STORAGE_KEY); }catch(e){}
+    var resumeTrack=0, resumeTime=0;
+    if (raw) {
+      try {
+        var s=JSON.parse(raw), age=(Date.now()-s.ts)/1000;
+        if (age<60 && s.track<tracks.length) {
+          resumeTrack = s.track;
+          resumeTime = s.time + (s.playing ? age : 0);
         }
-      }, 400);
+      } catch(e){}
+    }
+    if (fromWelcome || resumeTime > 0) {
+      // play immediately — welcome tap counts as gesture, or resuming
+      gestureReady = true;
+      if(tapHint) tapHint.style.display="none";
+      loadTrack(resumeTrack, resumeTime, true);
     } else {
-      restoreOrStart();
+      // wait for first gesture
+      if(tapHint) tapHint.style.display="";
+      loadTrack(0, 0, false);
     }
   });
 })();
