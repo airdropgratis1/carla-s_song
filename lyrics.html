@@ -330,7 +330,7 @@
     "Harry Styles · Carla's Song · Live Lounge · 2026"
   ];
 
-  var current = 0, started = false, gestureReady = false, muted = false;
+  var current = 0, started = false, muted = false;
   var audio       = document.getElementById("bg-audio");
   var progressBar = document.getElementById("progress");
   var trackLabel  = document.getElementById("track-label");
@@ -341,8 +341,7 @@
   var readBar     = document.getElementById("read-progress");
   var volSlider   = document.getElementById("volume-slider");
   var songMetaEl  = document.getElementById("song-meta");
-
-  var allLines = [
+  var allLines    = [
     document.querySelectorAll("#lyrics-0 .lyric-line"),
     document.querySelectorAll("#lyrics-1 .lyric-line")
   ];
@@ -350,23 +349,7 @@
 
   function fmt(s) { var m=Math.floor(s/60),ss=Math.floor(s%60); return m+":"+(ss<10?"0":"")+ss; }
   function setIcons(p) { iconPlay.style.display=p?"none":""; iconPause.style.display=p?"":"none"; }
-  function setLabel(txt) { trackLabel.classList.add("fade"); setTimeout(function(){ trackLabel.textContent=txt; trackLabel.classList.remove("fade"); },300); }
   function saveState() { try{ localStorage.setItem(STORAGE_KEY,JSON.stringify({track:current,time:audio.currentTime,playing:!audio.paused,ts:Date.now()})); }catch(e){} }
-
-  /* ── lyrics sync ── */
-  function syncLyrics(t) {
-    var lines = allLines[current];
-    if (!lines || !lines.length) return;
-    var activeIdx = -1;
-    for (var i = lines.length - 1; i >= 0; i--) {
-      if (t >= parseFloat(lines[i].dataset.t)) { activeIdx = i; break; }
-    }
-    if (activeIdx === lastActiveIdx[current]) return;
-    if (lastActiveIdx[current] >= 0) { lines[lastActiveIdx[current]].classList.remove("active"); lines[lastActiveIdx[current]].classList.add("past"); }
-    if (activeIdx >= 0) { lines[activeIdx].classList.remove("past"); lines[activeIdx].classList.add("active"); lines[activeIdx].scrollIntoView({behavior:"smooth",block:"center"}); }
-    for (var j = 0; j < activeIdx; j++) { lines[j].classList.remove("active"); lines[j].classList.add("past"); }
-    lastActiveIdx[current] = activeIdx;
-  }
 
   function switchPanel(i) {
     document.querySelectorAll(".lyrics-block").forEach(function(b,j){ b.classList.toggle("active",j===i); });
@@ -374,17 +357,49 @@
     songMetaEl.textContent = songMetas[i];
   }
 
+  function syncLyrics(t) {
+    var lines = allLines[current];
+    if (!lines||!lines.length) return;
+    var idx = -1;
+    for (var i=lines.length-1;i>=0;i--){ if(t>=parseFloat(lines[i].dataset.t)){idx=i;break;} }
+    if (idx===lastActiveIdx[current]) return;
+    if (lastActiveIdx[current]>=0){ lines[lastActiveIdx[current]].classList.remove("active"); lines[lastActiveIdx[current]].classList.add("past"); }
+    if (idx>=0){ lines[idx].classList.remove("past"); lines[idx].classList.add("active"); lines[idx].scrollIntoView({behavior:"smooth",block:"center"}); }
+    for (var j=0;j<idx;j++){ lines[j].classList.remove("active"); lines[j].classList.add("past"); }
+    lastActiveIdx[current]=idx;
+  }
+
   window.showSong = function(i) {
     switchPanel(i);
     allLines[i].forEach(function(l){ l.classList.remove("active","past"); });
-    lastActiveIdx[i] = -1;
-    var lines = allLines[i], t = audio.currentTime, activeIdx = -1;
-    for (var k = lines.length-1; k >= 0; k--) { if (t >= parseFloat(lines[k].dataset.t)) { activeIdx=k; break; } }
-    for (var j = 0; j <= activeIdx; j++) lines[j].classList.add(j===activeIdx?"active":"past");
-    lastActiveIdx[i] = activeIdx;
-    if (activeIdx >= 0) lines[activeIdx].scrollIntoView({behavior:"smooth",block:"center"});
+    lastActiveIdx[i]=-1;
+    var lines=allLines[i], t=audio.currentTime, idx=-1;
+    for (var k=lines.length-1;k>=0;k--){ if(t>=parseFloat(lines[k].dataset.t)){idx=k;break;} }
+    for (var j=0;j<=idx;j++) lines[j].classList.add(j===idx?"active":"past");
+    lastActiveIdx[i]=idx;
+    if (idx>=0) lines[idx].scrollIntoView({behavior:"smooth",block:"center"});
   };
 
+  /* ── play a track ── */
+  function play(i, fromTime) {
+    current = i;
+    trackLabel.textContent = tracks[i].label;
+    progressBar.value = 0;
+    switchPanel(i);
+    audio.volume = muted ? 0 : (volSlider.value/100 * tracks[i].volume * 2);
+    audio.src = tracks[i].src;
+    audio.load();
+    audio.addEventListener("canplay", function onCan(){
+      audio.removeEventListener("canplay", onCan);
+      if (fromTime > 0) audio.currentTime = fromTime;
+      audio.play().then(function(){
+        setIcons(true); started=true;
+        if (tapHint) tapHint.style.display="none";
+      }).catch(function(){ setIcons(false); });
+    }, { once: true });
+  }
+
+  /* ── lyric line click — switch track if needed ── */
   document.querySelectorAll(".lyric-line").forEach(function(line) {
     line.addEventListener("click", function() {
       var t = parseFloat(line.dataset.t);
@@ -392,66 +407,26 @@
       var block = line.closest(".lyrics-block");
       var blockIdx = block ? parseInt(block.id.replace("lyrics-","")) : current;
       if (blockIdx !== current) {
-        // wrong track playing — switch first, then seek
-        loadTrack(blockIdx, t, true);
+        play(blockIdx, t);
       } else {
-        // same track — just seek
         audio.currentTime = t;
         if (audio.paused) audio.play().then(function(){ setIcons(true); started=true; });
       }
     });
   });
 
-  function loadTrack(i, seekTo, andPlay) {
-    current = i;
-    trackLabel.textContent = tracks[i].label;
-    progressBar.value = 0;
-    switchPanel(i);
-    audio.src = tracks[i].src;
-    audio.volume = muted ? 0 : (volSlider.value/100 * tracks[i].volume * 2);
-    if (andPlay) {
-      audio.play()
-        .then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; if(seekTo>0) audio.currentTime=seekTo; })
-        .catch(function(){
-          audio.load();
-          audio.addEventListener("canplay", function onCan(){
-            audio.removeEventListener("canplay", onCan);
-            if(seekTo>0) audio.currentTime=seekTo;
-            audio.play().then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; }).catch(function(){});
-          }, { once: true });
-        });
-    } else {
-      audio.load();
-    }
-  }
-
   /* ── auto-advance ── */
   audio.addEventListener("ended", function(){
-    var next = current + 1;
-    if (next < tracks.length) {
-      current = next;
-      trackLabel.textContent = tracks[next].label;
-      progressBar.value = 0;
-      switchPanel(next);
-      audio.src = tracks[next].src;
-      audio.volume = muted ? 0 : (volSlider.value/100 * tracks[next].volume * 2);
-      audio.load();
-      audio.addEventListener("canplay", function onCan(){
-        audio.removeEventListener("canplay", onCan);
-        audio.play()
-          .then(function(){ setIcons(true); })
-          .catch(function(){ setIcons(false); });
-      }, { once: true });
-    } else {
-      setIcons(false); progressBar.value = 0;
-    }
+    var next = current+1;
+    if (next < tracks.length) play(next, 0);
+    else { setIcons(false); progressBar.value=0; }
   });
 
-  /* ── progress + lyrics sync ── */
+  /* ── progress + sync ── */
   audio.addEventListener("timeupdate", function(){
-    if (audio.duration && !isNaN(audio.duration)) {
-      progressBar.value = (audio.currentTime/audio.duration)*100;
-      timeDisplay.textContent = fmt(audio.currentTime)+" / "+fmt(audio.duration);
+    if (audio.duration&&!isNaN(audio.duration)){
+      progressBar.value=(audio.currentTime/audio.duration)*100;
+      timeDisplay.textContent=fmt(audio.currentTime)+" / "+fmt(audio.duration);
       syncLyrics(audio.currentTime);
     }
     saveState();
@@ -459,64 +434,55 @@
 
   /* ── controls ── */
   window.togglePlay = function(){
-    if (!started) { unlock(); return; }
-    if (audio.paused) audio.play().then(function(){ setIcons(true); });
+    if (audio.paused) audio.play().then(function(){ setIcons(true); started=true; });
     else { audio.pause(); setIcons(false); }
   };
   window.seekTo = function(v){ if(audio.duration&&!isNaN(audio.duration)) audio.currentTime=(v/100)*audio.duration; };
-  window.replayTrack = function(){ loadTrack(0,0,true); };
+  window.replayTrack = function(){ play(0,0); };
   window.setVolume = function(v){ muted=false; audio.volume=(v/100)*tracks[current].volume*2; };
   window.toggleMute = function(){ muted=!muted; audio.volume=muted?0:(volSlider.value/100*tracks[current].volume*2); document.getElementById("vol-icon").style.opacity=muted?"0.3":"1"; };
-
-  /* ── gesture unlock ── */
-  function unlock(){
-    if (started) return;
-    audio.play()
-      .then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; })
-      .catch(function(){ if(tapHint) tapHint.style.display=""; });
-  }
-  function onGesture(){ if(gestureReady) return; gestureReady=true; unlock(); }
-  document.addEventListener("touchstart", onGesture, { passive:true });
-  document.addEventListener("click", onGesture);
 
   /* ── scroll / fade-in ── */
   window.addEventListener("scroll", function(){
     var doc=document.documentElement, s=doc.scrollTop||document.body.scrollTop;
     readBar.style.width=(doc.scrollHeight-doc.clientHeight>0?s/(doc.scrollHeight-doc.clientHeight)*100:0)+"%";
   });
-  var obs = new IntersectionObserver(function(entries){ entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("visible"); obs.unobserve(e.target); } }); },{ threshold:0.08 });
+  var obs=new IntersectionObserver(function(e){ e.forEach(function(x){ if(x.isIntersecting){ x.target.classList.add("visible"); obs.unobserve(x.target); } }); },{ threshold:0.08 });
   document.querySelectorAll(".lyric-section").forEach(function(s){ obs.observe(s); });
 
+  /* ── navigate: save before leaving ── */
   window.navigate = function(e, url){
     e.preventDefault();
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        track: current, time: audio.currentTime,
-        playing: !audio.paused, ts: Date.now()
-      }));
-    } catch(ex){}
+    try { localStorage.setItem(STORAGE_KEY,JSON.stringify({track:current,time:audio.currentTime,playing:!audio.paused,ts:Date.now()})); } catch(ex){}
     document.body.classList.add("fade-out");
-    setTimeout(function(){ window.location.href=url; }, 240);
+    setTimeout(function(){ window.location.href=url; },240);
   };
+
+  /* ── first gesture ── */
+  function onGesture(){
+    document.removeEventListener("touchstart", onGesture);
+    document.removeEventListener("click", onGesture);
+    if (!started && audio.paused) {
+      audio.play().then(function(){ setIcons(true); started=true; if(tapHint) tapHint.style.display="none"; }).catch(function(){});
+    }
+  }
 
   /* ── boot ── */
   window.addEventListener("load", function(){
-    var raw; try{ raw=localStorage.getItem(STORAGE_KEY); }catch(e){}
-    if (raw) {
-      try {
-        var s=JSON.parse(raw), age=(Date.now()-s.ts)/1000;
-        if (age < 5 && s.track < tracks.length) {
-          // came from another page — resume seamlessly
-          gestureReady=true;
-          if(tapHint) tapHint.style.display="none";
-          loadTrack(s.track, s.time+(s.playing?age:0), s.playing);
-          return;
-        }
-      } catch(e){}
+    var s=null;
+    try { var r=localStorage.getItem(STORAGE_KEY); if(r) s=JSON.parse(r); } catch(e){}
+    var crossPage = s && (Date.now()-s.ts)<4000 && s.track<tracks.length;
+    if (crossPage) {
+      var resumeTime = s.time + (s.playing ? (Date.now()-s.ts)/1000 : 0);
+      play(s.track, resumeTime);
+    } else {
+      audio.src = tracks[0].src;
+      audio.volume = tracks[0].volume;
+      audio.load();
+      if(tapHint) tapHint.style.display="";
+      document.addEventListener("touchstart", onGesture, { passive:true });
+      document.addEventListener("click", onGesture);
     }
-    // default — wait for gesture
-    if(tapHint) tapHint.style.display="";
-    loadTrack(0, 0, false);
   });
 })();
 </script>
